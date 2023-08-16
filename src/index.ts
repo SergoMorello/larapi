@@ -25,6 +25,7 @@ class API extends Core {
 		this.setUser = this.setUser.bind(this);
 		this.updateUser = this.updateUser.bind(this);
 		this.logout = this.logout.bind(this);
+		this.getToken = this.getToken.bind(this);
 		this.get = this.get.bind(this);
 		this.post = this.post.bind(this);
 	}
@@ -99,6 +100,9 @@ class API extends Core {
 	public static addListener = this.instance.addListener;
 	public static setInitData = this.instance.setInitData;
 	public static deleteCacheGroup = this.instance.deleteCacheGroup;
+	public static getToken = this.instance.getToken;
+	public static user = this.instance.user;
+	public static uid = this.instance.uid;
 }
 
 (globalThis as any).apiSetInitData = API.setInitData;
