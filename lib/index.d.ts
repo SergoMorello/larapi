@@ -19,6 +19,8 @@ declare class API extends Core {
     private init;
     setToken(token: string): void;
     getToken(): string;
+    getUid(): number;
+    getUser(): TUser;
     get uid(): number;
     get user(): TUser;
     setUser(user: TUser): void;
@@ -39,6 +41,8 @@ declare class API extends Core {
     static setInitData: (data: import("./types").TGroupsData) => void;
     static deleteCacheGroup: (group: string) => void;
     static getToken: () => string;
+    static getUid: () => number;
+    static getUser: () => TUser;
     static user: TUser;
     static uid: number;
 }
