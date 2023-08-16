@@ -98,6 +98,7 @@ class API extends Core {
 	public static setToken = this.instance.setToken;
 	public static addListener = this.instance.addListener;
 	public static setInitData = this.instance.setInitData;
+	public static deleteCacheGroup = this.instance.deleteCacheGroup;
 }
 
 (globalThis as any).apiSetInitData = API.setInitData;
