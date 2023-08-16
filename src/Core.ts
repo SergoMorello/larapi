@@ -198,7 +198,7 @@ abstract class Core {
 		};
 	}
 
-	private deleteCacheGroup(group: string): void {
+	public deleteCacheGroup(group: string): void {
 		for(const key in this.cache) {
 			if (this.cache[key].group === group) {
 				delete this.cache[key];

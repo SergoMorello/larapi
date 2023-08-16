@@ -14,7 +14,7 @@ declare abstract class Core {
     private getCache;
     setHost(host: string): void;
     private setCache;
-    private deleteCacheGroup;
+    deleteCacheGroup(group: string): void;
     private deleteCache;
     setInitData(data: TGroupsData): void;
 }
