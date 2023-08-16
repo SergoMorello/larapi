@@ -28,6 +28,8 @@ class API extends Core {
 		this.getToken = this.getToken.bind(this);
 		this.get = this.get.bind(this);
 		this.post = this.post.bind(this);
+		this.getUid = this.getUid.bind(this);
+		this.getUser = this.getUser.bind(this);
 	}
 
 	public get(params: TParams) {
@@ -61,12 +63,20 @@ class API extends Core {
 		return this.token;
 	}
 
+	public getUid(): number {
+		return 'id' in this._user ? Number(this._user.id) : 0;
+	}
+
+	public getUser(): TUser {
+		return this._user;
+	}
+
 	public get uid(): number {
-			return 'id' in this._user ? Number(this._user.id) : 0;
+		return this.getUid();
 	}
 
 	public get user(): TUser {
-		return this._user;
+		return this.getUser();
 	}
 
 	public setUser(user: TUser) {
@@ -101,6 +111,8 @@ class API extends Core {
 	public static setInitData = this.instance.setInitData;
 	public static deleteCacheGroup = this.instance.deleteCacheGroup;
 	public static getToken = this.instance.getToken;
+	public static getUid = this.instance.getUid;
+	public static getUser = this.instance.getUser;
 	public static user = this.instance.user;
 	public static uid = this.instance.uid;
 }
