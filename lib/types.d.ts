@@ -4,6 +4,9 @@ export type TCache = {
 export type TData = {
     [index: string]: any;
 };
+export type TGroupsData = {
+    [index: string]: TData;
+};
 export type TMethod = 'GET' | 'POST';
 export type TParams = {
     path: string;

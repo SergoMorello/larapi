@@ -7,6 +7,7 @@ import EventEmitter,{
 import {
 	TCache,
 	TData,
+	TGroupsData,
 	TMethod,
 	TParams,
 	TRequestParams,
@@ -17,6 +18,7 @@ abstract class Core {
 	private host: string;
 		token: string;
 		cache: TCache;
+		initData: TGroupsData;
 	protected events: Events;
 
 	constructor() {
@@ -24,13 +26,16 @@ abstract class Core {
 		this.host = 'http://127.0.0.1/';
 		this.token = '';
 		this.cache = {};
+		this.initData = {};
 
+		this.request = this.request.bind(this);
 		this.setHost = this.setHost.bind(this);
-		this.setToken = this.setToken.bind(this);
 		this.addListener = this.addListener.bind(this);
+		this.setInitData = this.setInitData.bind(this);
 	}
 
 	protected request(method: TMethod, params: TParams) {
+		if (typeof XMLHttpRequest === 'undefined') return;
 
 		//Заголовки от 200 до 299
 		const success = (...args: any) => {
@@ -107,11 +112,11 @@ abstract class Core {
 		var dataCache;
 
 		if (params.globalName) {
-			// if (__global && __global[params.globalName]) {
-			// 	Core.setCache(pathCache, __global[params.globalName], (typeof params.cache === 'boolean' ? undefined : params.cache));
-			// 	params.cache = params.cache ?? true;
-			// 	delete __global[params.globalName];
-			// }
+			if (this.initData[params.globalName]) {
+				this.setCache(pathCache, this.initData[params.globalName], (typeof params.cache === 'boolean' ? undefined : params.cache));
+				params.cache = params.cache ?? true;
+				delete this.initData[params.globalName];
+			}
 		}
 		
 		if (params.cache) {
@@ -123,37 +128,41 @@ abstract class Core {
 			this.deleteCache(pathCache);
 		}
 		if (!dataCache) {
-			const xhr = new XMLHttpRequest();
+			try {
+				const xhr = new XMLHttpRequest();
 
-			xhr.open(method, this.host + path, true);
-			for(const header in fetchParams.headers) {
-				xhr.setRequestHeader(header, fetchParams.headers[header]);
-			}
-
-			xhr.onreadystatechange = () => {
-				if (xhr.readyState !== 4) {
-					return;
+				xhr.open(method, this.host + path, true);
+				for(const header in fetchParams.headers) {
+					xhr.setRequestHeader(header, fetchParams.headers[header]);
 				}
-				
-				const result = xhr.responseText ? JSON.parse(xhr.responseText) : {};
-
-				if (xhr.status >= 200 && xhr.status <= 299) {
-					if (params.cache) {
-						this.setCache(pathCache, result, (typeof params.cache === 'boolean' ? undefined : params.cache));
-					}
-					success(result);
-				}else{
-					if (xhr.status >= 400 && xhr.status <= 499) {
-						fail(result);
+	
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState !== 4) {
+						return;
 					}
 					
-					error(result);
-					console.error(result);
+					const result = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+	
+					if (xhr.status >= 200 && xhr.status <= 299) {
+						if (params.cache) {
+							this.setCache(pathCache, result, (typeof params.cache === 'boolean' ? undefined : params.cache));
+						}
+						success(result);
+					}else{
+						if (xhr.status >= 400 && xhr.status <= 499) {
+							fail(result);
+						}
+						
+						error(result);
+						console.warn(result);
+					}
+					complete(result);
 				}
-				complete(result);
+				xhr.send(fetchParams.body);
+			}catch(e) {
+				console.warn(e);
 			}
-
-			xhr.send(fetchParams.body);
+			
 		}
 		return {
 			clearCache: () => {
@@ -209,13 +218,8 @@ abstract class Core {
 		delete this.cache[keyCache];
 	}
 
-	public setToken(token: string) {
-		localStorage.setItem('token', token);
-		this.token = token;
-	}
-
-	public getToken() {
-		return this.token;
+	public setInitData(data: TGroupsData): void {
+		this.initData = data;
 	}
 }
 
