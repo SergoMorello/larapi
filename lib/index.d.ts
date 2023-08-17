@@ -1,5 +1,6 @@
 import Core from "./Core";
-import { TParams } from "./types";
+import { TMethod, TParams } from "./types";
+import Http from "./Http";
 type TUser = {
     [index: string]: any;
 };
@@ -10,12 +11,9 @@ declare class API extends Core {
     private static instance;
     private _user;
     constructor(config: TConfig);
-    get(params: TParams): {
-        clearCache: () => void;
-    } | undefined;
-    post(params: TParams): {
-        clearCache: () => void;
-    } | undefined;
+    http(method: TMethod, params: TParams): Http;
+    get(params: TParams): Http;
+    post(params: TParams): Http;
     private init;
     setToken(token: string): void;
     getToken(): string;
@@ -26,12 +24,9 @@ declare class API extends Core {
     setUser(user: TUser): void;
     updateUser(user: TUser): void;
     logout(): void;
-    static get: (params: TParams) => {
-        clearCache: () => void;
-    } | undefined;
-    static post: (params: TParams) => {
-        clearCache: () => void;
-    } | undefined;
+    static http: (method: TMethod, params: TParams) => Http;
+    static get: (params: TParams) => Http;
+    static post: (params: TParams) => Http;
     static setHost: (host: string) => void;
     static setUser: (user: TUser) => void;
     static updateUser: (user: TUser) => void;

@@ -1,21 +1,18 @@
 import { Events, Event } from 'easy-event-emitter';
-import { TCache, TGroupsData, TMethod, TParams, TListenerEvents } from './types';
+import { TData, TGroupsData, TListenerEvents } from './types';
 declare abstract class Core {
-    private host;
-    token: string;
-    cache: TCache;
+    private cache;
     initData: TGroupsData;
     protected events: Events;
-    constructor();
-    protected request(method: TMethod, params: TParams): {
-        clearCache: () => void;
-    } | undefined;
+    host: string;
+    token: string;
+    constructor(context?: Core);
     addListener(event: TListenerEvents, callback: (data: any) => void): Event;
-    private getCache;
+    protected getCache(request: string): TData | undefined;
     setHost(host: string): void;
-    private setCache;
+    protected setCache(request: string, data: TData, group?: string): void;
     deleteCacheGroup(group: string): void;
-    private deleteCache;
+    protected deleteCache(request: string): void;
     setInitData(data: TGroupsData): void;
 }
 export default Core;

@@ -1,5 +1,6 @@
 import Core from "./Core";
-import { TParams } from "./types";
+import { TMethod, TParams } from "./types";
+import Http from "./Http";
 
 type TUser = {
 	[index: string]: any;
@@ -26,18 +27,23 @@ class API extends Core {
 		this.updateUser = this.updateUser.bind(this);
 		this.logout = this.logout.bind(this);
 		this.getToken = this.getToken.bind(this);
+		this.http = this.http.bind(this);
 		this.get = this.get.bind(this);
 		this.post = this.post.bind(this);
 		this.getUid = this.getUid.bind(this);
 		this.getUser = this.getUser.bind(this);
 	}
 
-	public get(params: TParams) {
-		return this.request('GET', params);
+	public http(method: TMethod, params: TParams): Http {
+		return new Http(method, params, this);
 	}
 
-	public post(params: TParams) {
-		return this.request('POST', params);
+	public get(params: TParams): Http {
+		return this.http('GET', params).request();
+	}
+
+	public post(params: TParams): Http {
+		return this.http('POST', params).request();
 	}
 
 	private init(): void {
@@ -100,6 +106,7 @@ class API extends Core {
 		this.setToken('');
 	}
 
+	public static http = this.instance.http;
 	public static get = this.instance.get;
 	public static post = this.instance.post;
 	public static setHost = this.instance.setHost;
