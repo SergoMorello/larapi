@@ -1,12 +1,10 @@
-//@ts-ignore
-import md5 from 'md5';
 import EventEmitter,{
 	Events,
 	Event
 } from 'easy-event-emitter';
-// import ApiRequest from './ApiRequest';
 import {
 	TCache,
+	TCacheBody,
 	TData,
 	TGroupsData,
 	TListenerEvents
@@ -29,7 +27,7 @@ abstract class Core {
 		this.setHost = this.setHost.bind(this);
 		this.addListener = this.addListener.bind(this);
 		this.setInitData = this.setInitData.bind(this);
-		this.deleteCacheGroup = this.deleteCacheGroup.bind(this);
+		this.clearCacheGroup = this.clearCacheGroup.bind(this);
 		Object.assign(this, context);
 	}
 
@@ -37,8 +35,7 @@ abstract class Core {
 		return this.events.addListener(event, callback);
 	}
 
-	protected getCache(request: string): TData | undefined {
-		const key = md5(request);
+	protected getCache(key: string): TData | undefined {
 		if (this.cache[key]) {
 			if ((new Date()).getTime() <= (this.cache[key].time + 3600000000)) {
 				return this.cache[key].data;
@@ -52,15 +49,15 @@ abstract class Core {
 		this.host = host;
 	}
 
-	protected setCache(request: string, data: TData, group?: string): void {
-		this.cache[md5(request)] = {
+	protected setCache(key: string, data: TData, group?: string): void {
+		this.cache[key] = {
 			time: (new Date()).getTime(),
 			data: data,
 			group: group
 		};
 	}
 
-	public deleteCacheGroup(group: string): void {
+	public clearCacheGroup(group: string): void {
 		for(const key in this.cache) {
 			if (this.cache[key].group === group) {
 				delete this.cache[key];
@@ -68,16 +65,43 @@ abstract class Core {
 		}
 	}
 
-	protected deleteCache(request: string): void {
-		const keyCache = md5(request);
-		if (!this.cache[keyCache])
+	public updateCacheGroup(group: string, fieldKey: string, data: TData): void {
+
+		const update = (cacheData: any) => {
+			if (cacheData[fieldKey] === data[fieldKey]) {
+				for(const fieldKey in cacheData) {
+					if (fieldKey in data) {
+						cacheData[fieldKey] = data[fieldKey];
+					}
+				}
+			}
+			return cacheData;
+		};
+
+		for(const key in this.cache) {
+			if (this.cache[key].group === group) {
+				if (Array.isArray(this.cache[key].data)) {
+					this.cache[key].data = Object.values(this.cache[key].data).map(update);
+				}else{
+					this.cache[key].data = update(this.cache[key].data);
+				}
+			}
+		}
+	}
+
+	protected getCacheByIndex(index: string): TCacheBody {
+		return this.cache[index];
+	}
+
+	protected deleteCache(key: string): void {
+		if (!this.cache[key])
 			return;
 
-		const group = this.cache[keyCache].group;
+		const group = this.cache[key].group;
 		if (group) {
-			this.deleteCacheGroup(group);
+			this.clearCacheGroup(group);
 		}
-		delete this.cache[keyCache];
+		delete this.cache[key];
 	}
 
 	public setInitData(data: TGroupsData): void {

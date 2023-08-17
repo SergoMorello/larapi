@@ -116,7 +116,7 @@ class API extends Core {
 	public static setToken = this.instance.setToken;
 	public static addListener = this.instance.addListener;
 	public static setInitData = this.instance.setInitData;
-	public static deleteCacheGroup = this.instance.deleteCacheGroup;
+	public static clearCacheGroup = this.instance.clearCacheGroup;
 	public static getToken = this.instance.getToken;
 	public static getUid = this.instance.getUid;
 	public static getUser = this.instance.getUser;

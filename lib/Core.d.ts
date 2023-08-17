@@ -1,5 +1,5 @@
 import { Events, Event } from 'easy-event-emitter';
-import { TData, TGroupsData, TListenerEvents } from './types';
+import { TCacheBody, TData, TGroupsData, TListenerEvents } from './types';
 declare abstract class Core {
     private cache;
     initData: TGroupsData;
@@ -8,11 +8,13 @@ declare abstract class Core {
     token: string;
     constructor(context?: Core);
     addListener(event: TListenerEvents, callback: (data: any) => void): Event;
-    protected getCache(request: string): TData | undefined;
+    protected getCache(key: string): TData | undefined;
     setHost(host: string): void;
-    protected setCache(request: string, data: TData, group?: string): void;
-    deleteCacheGroup(group: string): void;
-    protected deleteCache(request: string): void;
+    protected setCache(key: string, data: TData, group?: string): void;
+    clearCacheGroup(group: string): void;
+    updateCacheGroup(group: string, fieldKey: string, data: TData): void;
+    protected getCacheByIndex(index: string): TCacheBody;
+    protected deleteCache(key: string): void;
     setInitData(data: TGroupsData): void;
 }
 export default Core;

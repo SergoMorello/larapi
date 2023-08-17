@@ -1,5 +1,5 @@
 import Core from "./Core";
-import { TMethod, TParams } from "./types";
+import { TMethod, TParams, TData } from "./types";
 declare class Http extends Core {
     private cacheIndex;
     method: TMethod;
@@ -12,6 +12,7 @@ declare class Http extends Core {
     private encodeUrlParams;
     private cuteUndifinedParams;
     request(): this;
+    updateCache(fieldKey: string, data: TData): void;
     clearCache(): void;
 }
 export default Http;

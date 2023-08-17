@@ -1,5 +1,11 @@
+export type TCacheBody = {
+	data: any;
+	group?: string;
+	time: number;
+}
+
 export type TCache = {
-	[index: string]: any;
+	[index: string]: TCacheBody;
 }
 
 export type TData = {
