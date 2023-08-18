@@ -10,20 +10,71 @@ import {
 
 class Http extends Core {
 	private cacheIndex: string;
+		currentCache?: TData;
+		requestParams: TRequestParams;
 		method: TMethod;
 		params: TParams;
+		path: string;
 
 	constructor(method: TMethod, params: TParams, context?: Core) {
 		super(context);
 		this.cacheIndex = '';
 		this.method = method;
 		this.params = params;
-		
+		this.path = this.params.path;
+		this.requestParams = {
+			method: this.method
+		};
+
 		this.success = this.success.bind(this);
 		this.fail = this.fail.bind(this);
 		this.error = this.error.bind(this);
 		this.complete = this.complete.bind(this);
 		this.request = this.request.bind(this);
+		this.addListener = this.addListener.bind(this);
+		this.addHeader = this.addHeader.bind(this);
+		this.deleteHeader = this.deleteHeader.bind(this);
+
+		this.initRequest();
+		this.initCache();
+	}
+
+	private initRequest(): void {
+		this.requestParams.headers = {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+		};
+
+		this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
+
+		if (this.method === 'GET') {
+			if (this.params.data)
+				this.path = this.params.path + '?' + this.encodeUrlParams(this.params.data);
+		}
+
+		if (this.method === 'POST') {
+			this.requestParams.body = JSON.stringify(this.params.data);
+		}
+	}
+
+	private initCache(): void {
+		this.cacheIndex = md5(this.path + JSON.stringify(this.params.data));
+		if (this.params.globalName) {
+			if (this.initData[this.params.globalName]) {
+				this.setCache(this.cacheIndex, this.initData[this.params.globalName], (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
+				this.params.cache = this.params.cache ?? true;
+				delete this.initData[this.params.globalName];
+			}
+		}
+		
+		if (this.params.cache) {
+			if (this.currentCache = this.getCache(this.cacheIndex)) {
+				this.success(this.currentCache);
+				this.complete(this.currentCache);
+			}	
+		}else{
+			this.deleteCache(this.cacheIndex);
+		}
 	}
 
 	//Заголовки от 200 до 299
@@ -36,6 +87,7 @@ class Http extends Core {
 				this.params.data,
 				typeof this.params.cacheUpdate === 'string' ? undefined : this.params.cacheUpdate.fieldKey);
 		}
+		
 		if (this.params.cacheClear && this.params.data) {
 			this.clearCacheGroup(
 				typeof this.params.cacheClear === 'string' ? this.params.cacheClear : this.params.cacheClear.group,
@@ -89,87 +141,55 @@ class Http extends Core {
 	}
 
 	public request(): this {
-		if (typeof XMLHttpRequest === 'undefined') return this;
-
-		var path = this.params.path;
-		const fetchParams: TRequestParams = {
-			method: this.method
-		};
-
-		fetchParams.headers = {
-			'Accept': 'application/json',
-			'Content-Type': 'application/json',
-			'Authorization': 'Bearer ' + this.token
-		};
-
-		this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
-
-		if (this.method === 'POST') {
-			fetchParams.body = JSON.stringify(this.params.data);
-		}
-
-		if (this.method === 'GET') {
-			if (this.params.data)
-				path = this.params.path + '?' + this.encodeUrlParams(this.params.data);
-		}
-
-		this.cacheIndex = md5(path + JSON.stringify(this.params.data));
-
-		var dataCache;
-
-		if (this.params.globalName) {
-			if (this.initData[this.params.globalName]) {
-				this.setCache(this.cacheIndex, this.initData[this.params.globalName], (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
-				this.params.cache = this.params.cache ?? true;
-				delete this.initData[this.params.globalName];
-			}
-		}
+		if (typeof XMLHttpRequest === 'undefined' || this.currentCache) return this;
 		
-		if (this.params.cache) {
-			if (dataCache = this.getCache(this.cacheIndex)) {
-				this.success(dataCache);
-				this.complete(dataCache);
-			}	
-		}else{
-			this.deleteCache(this.cacheIndex);
-		}
-		if (!dataCache) {
-			try {
-				const xhr = new XMLHttpRequest();
+		try {
+			const xhr = new XMLHttpRequest();
 
-				xhr.open(this.method, this.host + path, true);
-				for(const header in fetchParams.headers) {
-					xhr.setRequestHeader(header, fetchParams.headers[header]);
+			xhr.open(this.method, this.host + this.path, true);
+			for(const header in this.requestParams.headers) {
+				xhr.setRequestHeader(header, this.requestParams.headers[header]);
+			}
+
+			xhr.onreadystatechange = () => {
+				if (xhr.readyState !== 4) {
+					return;
 				}
-	
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState !== 4) {
-						return;
+				
+				const result = this.isJsonString(xhr.responseText) ? JSON.parse(xhr.responseText) : {};
+
+				if (xhr.status >= 200 && xhr.status <= 299) {
+					if (this.params.cache) {
+						this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
+					}
+					this.success(result);
+				}else{
+					if (xhr.status >= 400 && xhr.status <= 499) {
+						fail(result);
 					}
 					
-					const result = this.isJsonString(xhr.responseText) ? JSON.parse(xhr.responseText) : {};
-	
-					if (xhr.status >= 200 && xhr.status <= 299) {
-						if (this.params.cache) {
-							this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
-						}
-						this.success(result);
-					}else{
-						if (xhr.status >= 400 && xhr.status <= 499) {
-							fail(result);
-						}
-						
-						this.error(result);
-						console.warn(result);
-					}
-					this.complete(result);
+					this.error(result);
+					console.warn(result);
 				}
-				xhr.send(fetchParams.body);
-			}catch(e) {
-				console.warn(e);
+				this.complete(result);
 			}
+			xhr.send(this.requestParams.body);
+		}catch(e) {
+			console.warn(e);
 		}
 		return this
+	}
+
+	public addHeader(key: string, value: string): this {
+		this.requestParams.headers = {...this.requestParams.headers, [key]: value};
+		return this;
+	}
+
+	public deleteHeader(key: string): this {
+		if (this.requestParams.headers && (key in this.requestParams.headers)) {
+			delete this.requestParams.headers[key];
+		}
+		return this;
 	}
 
 	public updateCache(data: TData, fieldKey: string | null = 'id'): void {

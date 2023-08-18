@@ -15,6 +15,7 @@ class API extends Core {
 		host: ''
 	});
 	private _user: TUser;
+		token?: string;
 
 	constructor(config: TConfig) {
 		super();
@@ -35,7 +36,11 @@ class API extends Core {
 	}
 
 	public http(method: TMethod, params: TParams): Http {
-		return new Http(method, params, this);
+		const http = new Http(method, params, this);
+		if (this.token) {
+			http.addHeader('Authorization', 'Bearer ' + this.token);
+		}
+		return http;
 	}
 
 	public get(params: TParams): Http {

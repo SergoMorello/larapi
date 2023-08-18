@@ -5,7 +5,6 @@ declare abstract class Core {
     initData: TGroupsData;
     protected events: Events;
     host: string;
-    token: string;
     constructor(context?: Core);
     addListener(event: TListenerEvents, callback: (data: any) => void): Event;
     protected getCache(key: string): TData | undefined;

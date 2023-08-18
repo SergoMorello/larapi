@@ -15,12 +15,11 @@ abstract class Core {
 		initData: TGroupsData;
 	protected events: Events;
 		host: string;
-		token: string;
+		
 
 	constructor(context?: Core) {
 		this.events = new EventEmitter();
 		this.host = 'http://127.0.0.1/';
-		this.token = '';
 		this.cache = {};
 		this.initData = {};
 

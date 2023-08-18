@@ -10,13 +10,14 @@ type TConfig = {
 declare class API extends Core {
     private static instance;
     private _user;
+    token?: string;
     constructor(config: TConfig);
     http(method: TMethod, params: TParams): Http;
     get(params: TParams): Http;
     post(params: TParams): Http;
     private init;
     setToken(token: string): void;
-    getToken(): string;
+    getToken(): string | undefined;
     getUid(): number;
     getUser(): TUser;
     get uid(): number;
@@ -35,7 +36,7 @@ declare class API extends Core {
     static addListener: (event: import("./types").TListenerEvents, callback: (data: any) => void) => import("easy-event-emitter").Event;
     static setInitData: (data: import("./types").TGroupsData) => void;
     static clearCacheGroup: (group: string, data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
-    static getToken: () => string;
+    static getToken: () => string | undefined;
     static getUid: () => number;
     static getUser: () => TUser;
     static user: TUser;
