@@ -6,7 +6,7 @@ npm i larapi
 ```
 
 ### First step
-#### you can create instanse or use static methods for first configuration and for further use
+#### you can create instance or use static methods for first configuration and for further use
 ```js
 const api = new API({
 	host: 'https://my-host'
