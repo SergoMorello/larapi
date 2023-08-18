@@ -12,7 +12,7 @@ declare class Http extends Core {
     private encodeUrlParams;
     private cuteUndifinedParams;
     request(): this;
-    updateCache(fieldKey: string, data: TData): void;
-    clearCache(): void;
+    updateCache(data: TData, fieldKey?: string | null): void;
+    clearCache(data?: TData, fieldKey?: string | null): void;
 }
 export default Http;

@@ -34,7 +34,7 @@ declare class API extends Core {
     static setToken: (token: string) => void;
     static addListener: (event: import("./types").TListenerEvents, callback: (data: any) => void) => import("easy-event-emitter").Event;
     static setInitData: (data: import("./types").TGroupsData) => void;
-    static clearCacheGroup: (group: string) => void;
+    static clearCacheGroup: (group: string, data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
     static getToken: () => string;
     static getUid: () => number;
     static getUser: () => TUser;

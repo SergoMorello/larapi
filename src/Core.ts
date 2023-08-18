@@ -57,21 +57,46 @@ abstract class Core {
 		};
 	}
 
-	public clearCacheGroup(group: string): void {
-		for(const key in this.cache) {
-			if (this.cache[key].group === group) {
-				delete this.cache[key];
+	public clearCacheGroup(group: string, data?: TData, fieldKey: string | null = 'id'): void {
+		if (data) {
+
+			const clear = (cacheData: any) => {
+				if ((fieldKey && cacheData[fieldKey] === data[fieldKey]) || fieldKey === null) {
+					for(const key in cacheData) {
+						if (key in data) {
+							return false
+						}
+					}
+				}
+				return true;
+			};
+
+			for(const key in this.cache) {
+				if (this.cache[key].group === group) {
+					if (Array.isArray(this.cache[key].data)) {
+						this.cache[key].data = Object.values(this.cache[key].data).filter(clear);
+					}else{
+						if (!clear(this.cache[key].data))
+							delete this.cache[key];
+					}
+				}
+			}
+		}else{
+			for(const key in this.cache) {
+				if (this.cache[key].group === group) {
+					delete this.cache[key];
+				}
 			}
 		}
 	}
 
-	public updateCacheGroup(group: string, fieldKey: string, data: TData): void {
+	public updateCacheGroup(group: string, data: TData, fieldKey: string | null = 'id'): void {
 
 		const update = (cacheData: any) => {
-			if (cacheData[fieldKey] === data[fieldKey]) {
-				for(const fieldKey in cacheData) {
-					if (fieldKey in data) {
-						cacheData[fieldKey] = data[fieldKey];
+			if ((fieldKey && cacheData[fieldKey] === data[fieldKey]) || fieldKey === null) {
+				for(const key in cacheData) {
+					if (key in data) {
+						cacheData[key] = data[key];
 					}
 				}
 			}

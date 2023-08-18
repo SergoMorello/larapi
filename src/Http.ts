@@ -160,15 +160,22 @@ class Http extends Core {
 		return this
 	}
 
-	public updateCache(fieldKey: string, data: TData): void {
+	public updateCache(data: TData, fieldKey: string | null = 'id'): void {
 		const cache = this.getCacheByIndex(this.cacheIndex);
 		if (cache && cache.group) {
-			this.updateCacheGroup(cache.group, fieldKey, data);
+			this.updateCacheGroup(cache.group, data, fieldKey);
 		}
 	}
 
-	public clearCache(): void {
-		this.deleteCache(this.cacheIndex);
+	public clearCache(data?: TData, fieldKey: string | null = 'id'): void {
+		if (data) {
+			const cache = this.getCacheByIndex(this.cacheIndex);
+			if (cache && cache.group) {
+				this.clearCacheGroup(cache.group, data, fieldKey);
+			}
+		}else{
+			this.deleteCache(this.cacheIndex);
+		}
 	}
 }
 
