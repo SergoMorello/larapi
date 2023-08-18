@@ -45,6 +45,15 @@ abstract class Core {
 		}
 	}
 
+	protected isJsonString(str: string) {
+		try {
+			JSON.parse(str);
+		} catch (e) {
+			return false;
+		}
+		return true;
+	}
+
 	public setHost(host: string): void {
 		this.host = host;
 	}

@@ -13,10 +13,16 @@ export type TGroupsData = {
     [index: string]: TData;
 };
 export type TMethod = 'GET' | 'POST';
+export type TCacheControll = string | {
+    group: string;
+    fieldKey: string;
+};
 export type TParams = {
     path: string;
     data?: TData;
     cache?: string | boolean;
+    cacheUpdate?: TCacheControll;
+    cacheClear?: TCacheControll;
     globalName?: string;
     success?: (...args: any) => void;
     error?: (...args: any) => void;

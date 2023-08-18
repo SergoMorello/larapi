@@ -9,6 +9,7 @@ declare abstract class Core {
     constructor(context?: Core);
     addListener(event: TListenerEvents, callback: (data: any) => void): Event;
     protected getCache(key: string): TData | undefined;
+    protected isJsonString(str: string): boolean;
     setHost(host: string): void;
     protected setCache(key: string, data: TData, group?: string): void;
     clearCacheGroup(group: string, data?: TData, fieldKey?: string | null): void;
