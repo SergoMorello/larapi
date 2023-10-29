@@ -165,7 +165,7 @@ class Http extends Core {
 					this.success(result);
 				}else{
 					if (xhr.status >= 400 && xhr.status <= 499) {
-						fail(result);
+						this.fail(result);
 					}
 					
 					this.error(result);
@@ -176,6 +176,7 @@ class Http extends Core {
 			xhr.send(this.requestParams.body);
 		}catch(e) {
 			console.warn(e);
+			throw e;
 		}
 		return this
 	}
