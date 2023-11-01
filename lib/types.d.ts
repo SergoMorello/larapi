@@ -12,7 +12,7 @@ export type TData = {
 export type TGroupsData = {
     [index: string]: TData;
 };
-export type TMethod = 'GET' | 'POST';
+export type TMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS';
 export type TCacheControll = string | {
     group: string;
     fieldKey: string;

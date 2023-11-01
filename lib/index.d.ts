@@ -15,6 +15,10 @@ declare class API extends Core {
     http(method: TMethod, params: TParams): Http;
     get(params: TParams): Http;
     post(params: TParams): Http;
+    put(params: TParams): Http;
+    patch(params: TParams): Http;
+    delete(params: TParams): Http;
+    options(params: TParams): Http;
     private init;
     setToken(token: string): void;
     getToken(): string | undefined;

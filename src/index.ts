@@ -31,6 +31,10 @@ class API extends Core {
 		this.http = this.http.bind(this);
 		this.get = this.get.bind(this);
 		this.post = this.post.bind(this);
+		this.put = this.put.bind(this);
+		this.patch = this.patch.bind(this);
+		this.delete = this.delete.bind(this);
+		this.options = this.options.bind(this);
 		this.getUid = this.getUid.bind(this);
 		this.getUser = this.getUser.bind(this);
 	}
@@ -49,6 +53,22 @@ class API extends Core {
 
 	public post(params: TParams): Http {
 		return this.http('POST', params).request();
+	}
+
+	public put(params: TParams): Http {
+		return this.http('PUT', params).request();
+	}
+
+	public patch(params: TParams): Http {
+		return this.http('PATCH', params).request();
+	}
+
+	public delete(params: TParams): Http {
+		return this.http('DELETE', params).request();
+	}
+
+	public options(params: TParams): Http {
+		return this.http('OPTIONS', params).request();
 	}
 
 	private init(): void {
