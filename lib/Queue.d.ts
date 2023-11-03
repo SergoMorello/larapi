@@ -5,6 +5,8 @@ declare class Queue {
     constructor();
     has(request: string): boolean;
     get(request: string): Http | undefined;
+    clear(request: string): void;
+    private withClear;
     push(request: string, instance: Http): boolean;
     static has: (request: string) => boolean;
     static get: (request: string) => Http | undefined;
