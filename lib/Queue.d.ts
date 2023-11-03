@@ -6,10 +6,10 @@ declare class Queue {
     has(request: string): boolean;
     get(request: string): Http | undefined;
     clear(request: string): void;
-    private withClear;
     push(request: string, instance: Http): boolean;
     static has: (request: string) => boolean;
     static get: (request: string) => Http | undefined;
+    static clear: (request: string) => void;
     static push: (request: string, instance: Http) => boolean;
 }
 export default Queue;

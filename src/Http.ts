@@ -189,6 +189,7 @@ class Http extends Core {
 					console.warn(result);
 				}
 				this.complete(result);
+				Queue.clear(this.cacheIndex);
 			}
 			xhr.send(this.requestParams.body);
 		}catch(e) {

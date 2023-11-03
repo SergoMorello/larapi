@@ -12,7 +12,6 @@ class Queue {
 		this.has = this.has.bind(this);
 		this.get = this.get.bind(this);
 		this.clear = this.clear.bind(this);
-		this.withClear = this.withClear.bind(this);
 		this.push = this.push.bind(this);
 	}
 
@@ -30,26 +29,22 @@ class Queue {
 		}
 	}
 
-	private withClear(request: string, callback: (args: any) => void) {
-		this.clear(request);
-		return callback;
-	}
-
 	public push(request: string, instance: Http): boolean {
 		const refInstance = this.get(request);
 		if (!refInstance) {
 			this.queue[request] = instance;
 		}else{
-			refInstance?.addListener('api-request-success', this.withClear(request, instance.success));
-			refInstance?.addListener('api-request-error', this.withClear(request, instance.error));
-			refInstance?.addListener('api-request-fail', this.withClear(request, instance.fail));
-			refInstance?.addListener('api-request-complete', this.withClear(request, instance.complete));
+			refInstance?.addListener('api-request-success', instance.success);
+			refInstance?.addListener('api-request-error', instance.error);
+			refInstance?.addListener('api-request-fail', instance.fail);
+			refInstance?.addListener('api-request-complete', instance.complete);
 		}
 		return refInstance instanceof Http;
 	}
 
 	public static has = this.instance.has;
 	public static get = this.instance.get;
+	public static clear = this.instance.clear;
 	public static push = this.instance.push;
 }
 
