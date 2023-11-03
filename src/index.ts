@@ -10,6 +10,7 @@ import type {
 import Http from "./Http";
 
 type TUser = {
+	id: number;
 	[index: string]: any;
 }
 
@@ -17,17 +18,18 @@ type TConfig = {
 	host: string;
 }
 
-class API extends Core {
+/** Laravel API Client */
+class API<USER extends TUser = TUser> extends Core {
 	private static instance = new API({
 		host: ''
 	});
-	private _user: TUser;
+	private _user: USER;
 		token?: string;
 
 	constructor(config: TConfig) {
 		super();
 		this.setHost(config.host);
-		this._user = {};
+		this._user = {} as USER;
 		this.init();
 
 		this.setToken = this.setToken.bind(this);
@@ -83,7 +85,7 @@ class API extends Core {
 		const token = localStorage.getItem('token');
 		const strUser = localStorage.getItem('user');
 		if (strUser) {
-			const user: TUser = JSON.parse(strUser);
+			const user: USER = JSON.parse(strUser);
 			this.setUser(user);
 		}
 		if (token) {
@@ -106,10 +108,10 @@ class API extends Core {
 	}
 
 	public getUid(): number {
-		return 'id' in this._user ? Number(this._user.id) : 0;
+		return ('id' in this._user) ? Number(this._user.id) : 0;
 	}
 
-	public getUser(): TUser {
+	public getUser(): USER {
 		return this._user;
 	}
 
@@ -117,18 +119,18 @@ class API extends Core {
 		return this.getUid();
 	}
 
-	public get user(): TUser {
+	public get user(): USER {
 		return this.getUser();
 	}
 
-	public setUser(user: TUser) {
+	public setUser(user: USER) {
 		if (typeof window === 'undefined') return;
 		localStorage.setItem('user', JSON.stringify(user));
 		this._user = user;
 		this.events.emit('login', user);
 	}
 
-	public updateUser(user: TUser) {
+	public updateUser(user: USER) {
 		this.events.emit('update', this.user);
 		this.setUser({...this.user, ...user});
 	}
@@ -138,7 +140,7 @@ class API extends Core {
 		localStorage.removeItem('user');
 		localStorage.removeItem('token');
 		this.events.emit('logout', this.user);
-		this.setUser({});
+		this.setUser({} as USER);
 		this.setToken('');
 	}
 

@@ -3,12 +3,14 @@ import type { TMethod, TParams, TListenerEvents } from "./types";
 import type { Event } from "easy-event-emitter";
 import Http from "./Http";
 type TUser = {
+    id: number;
     [index: string]: any;
 };
 type TConfig = {
     host: string;
 };
-declare class API extends Core {
+/** Laravel API Client */
+declare class API<USER extends TUser = TUser> extends Core {
     private static instance;
     private _user;
     token?: string;
@@ -25,11 +27,11 @@ declare class API extends Core {
     setToken(token: string): void;
     getToken(): string | undefined;
     getUid(): number;
-    getUser(): TUser;
+    getUser(): USER;
     get uid(): number;
-    get user(): TUser;
-    setUser(user: TUser): void;
-    updateUser(user: TUser): void;
+    get user(): USER;
+    setUser(user: USER): void;
+    updateUser(user: USER): void;
     logout(): void;
     static http: (method: TMethod, params: TParams) => Http;
     static get: (params: TParams) => Http;
