@@ -1,16 +1,23 @@
 //@ts-ignore
 import md5 from 'md5';
 import Core from "./Core";
-import {
+import Queue from './Queue';
+import EventEmitter,{
+	Event,
+	Events
+} from "easy-event-emitter";
+import type {
 	TMethod,
 	TParams,
 	TData,
-	TRequestParams
+	TRequestParams,
+	TListenerEvents
 } from "./types";
 
 class Http extends Core {
 	private cacheIndex: string;
 		currentCache?: TData;
+		currentEvents: Events
 		requestParams: TRequestParams;
 		method: TMethod;
 		params: TParams;
@@ -18,6 +25,7 @@ class Http extends Core {
 
 	constructor(method: TMethod, params: TParams, context?: Core) {
 		super(context);
+		this.currentEvents = new EventEmitter();
 		this.cacheIndex = '';
 		this.method = method;
 		this.params = params;
@@ -30,8 +38,8 @@ class Http extends Core {
 		this.fail = this.fail.bind(this);
 		this.error = this.error.bind(this);
 		this.complete = this.complete.bind(this);
+		this.setEmit = this.setEmit.bind(this);
 		this.request = this.request.bind(this);
-		this.addListener = this.addListener.bind(this);
 		this.addHeader = this.addHeader.bind(this);
 		this.deleteHeader = this.deleteHeader.bind(this);
 
@@ -47,12 +55,12 @@ class Http extends Core {
 
 		this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
 
-		if (this.method === 'GET') {
+		if (this.method === 'GET' || this.method === 'HEAD') {
 			if (this.params.data)
 				this.path = this.params.path + '?' + this.encodeUrlParams(this.params.data);
 		}
 
-		if (this.method === 'POST') {
+		if (this.method === 'POST' || this.method === 'PUT') {
 			this.requestParams.body = JSON.stringify(this.params.data);
 		}
 	}
@@ -77,8 +85,16 @@ class Http extends Core {
 		}
 	}
 
+	private setEmit(event: TListenerEvents, args: any) {
+		this.currentEvents.emit(event, args[0]);
+		this.events.emit(event, {
+			cacheIndex: this.cacheIndex,
+			args: args[0]
+		});
+	}
+
 	//Заголовки от 200 до 299
-	private success(...args: any) {
+	public success(...args: any) {
 		if (typeof this.params.success === 'function')
 			this.params.success(...args);
 		if (this.params.cacheUpdate && this.params.data) {
@@ -94,32 +110,33 @@ class Http extends Core {
 				this.params.data,
 				typeof this.params.cacheClear === 'string' ? undefined : this.params.cacheClear.fieldKey);
 		}
+		this.setEmit('api-request-success', args);
 	}
 
 	//Заголовки от 400 до 499
-	private fail(...args: any) {
+	public fail(...args: any) {
 		if (typeof this.params.fail === 'function') {
 			this.params.fail(...args);
 		}
 		
-		this.events.emit('api-request-fail', args);
+		this.setEmit('api-request-fail', args);
 	}
 
 	//Все остальные
-	private error(...args: any) {
+	public error(...args: any) {
 		if (typeof this.params.error === 'function') {
 			this.params.error(...args);
 		}
 		
-		this.events.emit('api-request-error', args);
+		this.setEmit('api-request-error', args);
 	}
 
-	private complete(...args: any) {
+	public complete(...args: any) {
 		if (typeof this.params.complete === 'function') {
 			this.params.complete(...args);
 		}	
 
-		this.events.emit('api-request-complete', args);
+		this.setEmit('api-request-complete', args);
 	}
 
 	private encodeUrlParams(data: TData) {
@@ -141,7 +158,7 @@ class Http extends Core {
 	}
 
 	public request(): this {
-		if (typeof XMLHttpRequest === 'undefined' || this.currentCache) return this;
+		if (typeof XMLHttpRequest === 'undefined' || this.currentCache || Queue.push(this.cacheIndex, this)) return this;
 		
 		try {
 			const xhr = new XMLHttpRequest();
@@ -184,6 +201,10 @@ class Http extends Core {
 	public addHeader(key: string, value: string): this {
 		this.requestParams.headers = {...this.requestParams.headers, [key]: value};
 		return this;
+	}
+
+	public addListener(event: TListenerEvents, callback: (data: any) => void): Event {
+		return this.currentEvents.addListener(event, callback);
 	}
 
 	public deleteHeader(key: string): this {

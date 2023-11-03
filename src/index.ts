@@ -1,5 +1,12 @@
 import Core from "./Core";
-import { TMethod, TParams } from "./types";
+import type {
+	TMethod,
+	TParams,
+	TListenerEvents
+} from "./types";
+import type {
+	Event
+} from "easy-event-emitter";
 import Http from "./Http";
 
 type TUser = {
@@ -84,6 +91,10 @@ class API extends Core {
 		}
 	}
 
+	public addListener(event: TListenerEvents, callback: (data: any) => void): Event {
+		return this.events.addListener(event, callback);
+	}
+
 	public setToken(token: string) {
 		if (typeof window === 'undefined') return;
 		localStorage.setItem('token', token);
@@ -147,6 +158,11 @@ class API extends Core {
 	public static getUser = this.instance.getUser;
 	public static user = this.instance.user;
 	public static uid = this.instance.uid;
+
+	/**
+	 * @deprecated The method should not be used
+	 */
+	public static deleteCacheGroup = this.instance.clearCacheGroup;
 }
 
 (globalThis as any).apiSetInitData = API.setInitData;

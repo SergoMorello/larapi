@@ -1,5 +1,6 @@
 import Core from "./Core";
-import { TMethod, TParams } from "./types";
+import type { TMethod, TParams, TListenerEvents } from "./types";
+import type { Event } from "easy-event-emitter";
 import Http from "./Http";
 type TUser = {
     [index: string]: any;
@@ -20,6 +21,7 @@ declare class API extends Core {
     delete(params: TParams): Http;
     options(params: TParams): Http;
     private init;
+    addListener(event: TListenerEvents, callback: (data: any) => void): Event;
     setToken(token: string): void;
     getToken(): string | undefined;
     getUid(): number;
@@ -37,7 +39,7 @@ declare class API extends Core {
     static updateUser: (user: TUser) => void;
     static logout: () => void;
     static setToken: (token: string) => void;
-    static addListener: (event: import("./types").TListenerEvents, callback: (data: any) => void) => import("easy-event-emitter").Event;
+    static addListener: (event: TListenerEvents, callback: (data: any) => void) => Event;
     static setInitData: (data: import("./types").TGroupsData) => void;
     static clearCacheGroup: (group: string, data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
     static getToken: () => string | undefined;
@@ -45,5 +47,9 @@ declare class API extends Core {
     static getUser: () => TUser;
     static user: TUser;
     static uid: number;
+    /**
+     * @deprecated The method should not be used
+     */
+    static deleteCacheGroup: (group: string, data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
 }
 export default API;

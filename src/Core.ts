@@ -1,13 +1,11 @@
 import EventEmitter,{
-	Events,
-	Event
+	Events
 } from 'easy-event-emitter';
-import {
+import type {
 	TCache,
 	TCacheBody,
 	TData,
-	TGroupsData,
-	TListenerEvents
+	TGroupsData
 } from './types';
 
 abstract class Core {
@@ -24,14 +22,9 @@ abstract class Core {
 		this.initData = {};
 
 		this.setHost = this.setHost.bind(this);
-		this.addListener = this.addListener.bind(this);
 		this.setInitData = this.setInitData.bind(this);
 		this.clearCacheGroup = this.clearCacheGroup.bind(this);
 		Object.assign(this, context);
-	}
-
-	public addListener(event: TListenerEvents, callback: (data: any) => void): Event {
-		return this.events.addListener(event, callback);
 	}
 
 	protected getCache(key: string): TData | undefined {
