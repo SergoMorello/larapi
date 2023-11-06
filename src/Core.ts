@@ -96,9 +96,14 @@ abstract class Core {
 
 		const update = (cacheData: any) => {
 			const retData = cacheData;
-			for(const key of fieldKey!.split('.')) {
-				cacheData = cacheData[key]
+			
+			const fieldList = fieldKey!.split('.');
+			if (fieldList.length > 1) {
+				for(const key of fieldList) {
+					cacheData = cacheData[key]
+				}
 			}
+			
 			if ((fieldKey && cacheData[fieldKey] === data[fieldKey]) || fieldKey === null) {
 				for(const key in cacheData) {
 					if (key in data) {
