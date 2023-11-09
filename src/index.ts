@@ -46,6 +46,7 @@ class API<USER extends TUser = TUser> extends Core {
 		this.options = this.options.bind(this);
 		this.getUid = this.getUid.bind(this);
 		this.getUser = this.getUser.bind(this);
+		this.addListener = this.addListener.bind(this);
 	}
 
 	public http(method: TMethod, params: TParams): Http {
@@ -168,5 +169,7 @@ class API<USER extends TUser = TUser> extends Core {
 }
 
 (globalThis as any).apiSetInitData = API.setInitData;
-
+export type {
+	Event
+};
 export default API;

@@ -24,7 +24,14 @@ abstract class Core {
 		this.setHost = this.setHost.bind(this);
 		this.setInitData = this.setInitData.bind(this);
 		this.clearCacheGroup = this.clearCacheGroup.bind(this);
-		Object.assign(this, context);
+		if (context) {
+			Object.assign(this, {
+				host: context?.host,
+				events: context?.events,
+				cache: context?.cache,
+				initData: context?.initData
+			});
+		}
 	}
 
 	protected getCache(key: string): TData | undefined {

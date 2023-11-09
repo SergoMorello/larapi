@@ -54,4 +54,5 @@ declare class API<USER extends TUser = TUser> extends Core {
      */
     static deleteCacheGroup: (group: string, data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
 }
+export type { Event };
 export default API;
