@@ -99,6 +99,18 @@ abstract class Core {
 		}
 	}
 
+	private setDataTree(obj: any, path: string, val: any) { 
+		const keys = path.split('.');
+		const lastKey = keys.pop();
+		const lastObj = keys.reduce((obj, key) => 
+			obj[key] = obj[key] || {}, 
+			obj);
+		if (typeof lastKey === 'number') {
+			lastObj[lastKey] = val;
+		}
+		return obj;
+	};
+
 	public updateCacheGroup(group: string, data: TData, fieldKey: string | null = 'id'): void {
 
 		const update = (cacheData: any) => {
@@ -107,7 +119,7 @@ abstract class Core {
 			const fieldList = fieldKey!.split('.');
 			if (fieldList.length > 1) {
 				for(const key of fieldList) {
-					cacheData = cacheData[key]
+					cacheData = cacheData[key];
 				}
 			}
 			
@@ -130,6 +142,17 @@ abstract class Core {
 				}
 			}
 		}
+	}
+
+	public appendCacheGroup(group: string, data: TData): void {
+		
+
+		// for(const key in this.cache) {
+		// 	if (this.cache[key].group === group) {
+		// 		console.log(this.setDataTree(this.cache[key].data, 'data.test', 'tttttt'));
+		// 	}
+		// }
+		//console.log(this.cache);
 	}
 
 	protected getCacheByIndex(index: string): TCacheBody {

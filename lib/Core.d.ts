@@ -11,7 +11,9 @@ declare abstract class Core {
     setHost(host: string): void;
     protected setCache(key: string, data: TData, group?: string): void;
     clearCacheGroup(group: string, data?: TData, fieldKey?: string | null): void;
+    private setDataTree;
     updateCacheGroup(group: string, data: TData, fieldKey?: string | null): void;
+    appendCacheGroup(group: string, data: TData): void;
     protected getCacheByIndex(index: string): TCacheBody;
     protected deleteCache(key: string): void;
     setInitData(data: TGroupsData): void;
