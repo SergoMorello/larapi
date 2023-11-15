@@ -109,7 +109,7 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public getUid(): number {
-		return ('id' in this._user) ? Number(this._user.id) : 0;
+		return (typeof this._user === 'object' && 'id' in this._user) ? Number(this._user.id) : 0;
 	}
 
 	public getUser(): USER {
@@ -132,17 +132,19 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public updateUser(user: USER) {
-		this.events.emit('update', this.user);
-		this.setUser({...this.user, ...user});
+		const updatedUser = {...this.user, ...user};
+		this.setUser(updatedUser);
+		this.events.emit('update', updatedUser);
 	}
 
 	public logout() {
 		if (typeof window === 'undefined') return;
 		localStorage.removeItem('user');
 		localStorage.removeItem('token');
-		this.events.emit('logout', this.user);
+		const user = this.user;
 		this.setUser({} as USER);
 		this.setToken('');
+		this.events.emit('logout', user);
 	}
 
 	public static http = this.instance.http;
