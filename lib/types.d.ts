@@ -12,7 +12,7 @@ export type TData = {
 export type TGroupsData = {
     [index: string]: TData;
 };
-export type TMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS';
+export type TMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'CONNECT' | 'TRACE';
 export type TCacheControll = string | {
     group: string;
     fieldKey: string;
@@ -35,5 +35,6 @@ export type TRequestParams = {
         [index: string]: string;
     };
     body?: string;
+    withoutResponse?: boolean;
 };
 export type TListenerEvents = 'api-request-success' | 'api-request-fail' | 'api-request-error' | 'api-request-complete' | 'login' | 'logout' | 'user-update';

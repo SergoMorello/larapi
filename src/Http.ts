@@ -1,4 +1,3 @@
-//@ts-ignore
 import md5 from 'md5';
 import Core from "./Core";
 import Queue from './Queue';
@@ -55,13 +54,21 @@ class Http extends Core {
 
 		this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
 
-		if (this.method === 'GET' || this.method === 'HEAD') {
+		if ((['GET', 'HEAD'] as TMethod[]).includes(this.method)) {
 			if (this.params.data)
 				this.path = this.params.path + '?' + this.encodeUrlParams(this.params.data);
+
+			if (this.method === 'HEAD') {
+				this.requestParams.withoutResponse = true;
+			}
 		}
 
-		if (this.method === 'POST' || this.method === 'PUT') {
+		if ((['POST', 'PUT', 'CONNECT', 'PATH'] as TMethod[]).includes(this.method)) {
 			this.requestParams.body = JSON.stringify(this.params.data);
+		}
+
+		if ((['PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE'] as TMethod[]).includes(this.method)) {
+			this.params.cache = false;
 		}
 	}
 
@@ -74,7 +81,6 @@ class Http extends Core {
 				delete this.initData[this.params.globalName];
 			}
 		}
-		
 		if (this.params.cache) {
 			if (this.currentCache = this.getCache(this.cacheIndex)) {
 				this.success(this.currentCache);
@@ -169,11 +175,9 @@ class Http extends Core {
 			}
 
 			xhr.onreadystatechange = () => {
-				if (xhr.readyState !== 4) {
-					return;
-				}
+				if (xhr.readyState !== 4) return;
 				
-				const result = this.isJsonString(xhr.responseText) ? JSON.parse(xhr.responseText) : {};
+				const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? JSON.parse(xhr.responseText) : {};
 
 				if (xhr.status >= 200 && xhr.status <= 299) {
 					if (this.params.cache) {

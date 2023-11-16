@@ -39,11 +39,14 @@ class API<USER extends TUser = TUser> extends Core {
 		this.getToken = this.getToken.bind(this);
 		this.http = this.http.bind(this);
 		this.get = this.get.bind(this);
+		this.head = this.head.bind(this);
 		this.post = this.post.bind(this);
 		this.put = this.put.bind(this);
 		this.patch = this.patch.bind(this);
 		this.delete = this.delete.bind(this);
 		this.options = this.options.bind(this);
+		this.connect = this.connect.bind(this);
+		this.trace = this.trace.bind(this);
 		this.getUid = this.getUid.bind(this);
 		this.getUser = this.getUser.bind(this);
 		this.addListener = this.addListener.bind(this);
@@ -59,6 +62,10 @@ class API<USER extends TUser = TUser> extends Core {
 
 	public get(params: TParams): Http {
 		return this.http('GET', params).request();
+	}
+
+	public head(params: TParams): Http {
+		return this.http('HEAD', params).request();
 	}
 
 	public post(params: TParams): Http {
@@ -79,6 +86,14 @@ class API<USER extends TUser = TUser> extends Core {
 
 	public options(params: TParams): Http {
 		return this.http('OPTIONS', params).request();
+	}
+
+	public connect(params: TParams): Http {
+		return this.http('CONNECT', params).request();
+	}
+
+	public trace(params: TParams): Http {
+		return this.http('TRACE', params).request();
 	}
 
 	private init(): void {
@@ -149,7 +164,14 @@ class API<USER extends TUser = TUser> extends Core {
 
 	public static http = this.instance.http;
 	public static get = this.instance.get;
+	public static head = this.instance.head;
 	public static post = this.instance.post;
+	public static put = this.instance.put;
+	public static patch = this.instance.patch;
+	public static delete = this.instance.delete;
+	public static options = this.instance.options;
+	public static connect = this.instance.connect;
+	public static trace = this.instance.trace;
 	public static setHost = this.instance.setHost;
 	public static setUser = this.instance.setUser;
 	public static updateUser = this.instance.updateUser;
