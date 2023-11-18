@@ -149,7 +149,7 @@ class API<USER extends TUser = TUser> extends Core {
 	public updateUser(user: USER) {
 		const updatedUser = {...this.user, ...user};
 		this.setUser(updatedUser);
-		this.events.emit('update', updatedUser);
+		this.events.emit('user-update', updatedUser);
 	}
 
 	public logout() {
