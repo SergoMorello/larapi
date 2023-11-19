@@ -23,7 +23,9 @@ abstract class Core {
 
 		this.setHost = this.setHost.bind(this);
 		this.setInitData = this.setInitData.bind(this);
+		this.triggerByCacheGroup = this.triggerByCacheGroup.bind(this);
 		this.clearCacheGroup = this.clearCacheGroup.bind(this);
+		this.updateCacheGroup = this.updateCacheGroup.bind(this);
 		if (context) {
 			Object.assign(this, {
 				host: context?.host,
@@ -65,38 +67,52 @@ abstract class Core {
 		};
 	}
 
-	public clearCacheGroup(group: string, data?: TData, fieldKey: string | null = 'id'): void {
-		if (data) {
+	protected groupFromArray<T = string>(groups: T | T[], callback: (group: T) => void): void {
+		if (Array.isArray(groups)) {
+			groups.map(callback);
+		}else if (typeof groups === 'string') {
+			callback(groups);
+		}
+	}
 
-			const clear = (cacheData: any) => {
-				if ((fieldKey && cacheData?.[fieldKey] === data?.[fieldKey]) || fieldKey === null) {
-					for(const key in cacheData) {
-						if (key in data) {
-							return false
+	public triggerByCacheGroup(groups: string | string[]): void {
+		this.groupFromArray(groups, (group) => this.events.emit('trigger-request-by-cache-' + group, undefined));
+	}
+
+	public clearCacheGroup(groups: string | string[], data?: TData, fieldKey: string | null = 'id'): void {
+		this.groupFromArray(groups, (group) => {
+			if (data) {
+
+				const clear = (cacheData: any) => {
+					if ((fieldKey && cacheData?.[fieldKey] === data?.[fieldKey]) || fieldKey === null) {
+						for(const key in cacheData) {
+							if (key in data) {
+								return false
+							}
+						}
+					}
+					return true;
+				};
+	
+	
+				for(const key in this.cache) {
+					if (this.cache[key].group === group) {
+						if (Array.isArray(this.cache[key].data)) {
+							this.cache[key].data = Object.values(this.cache[key].data).filter(clear);
+						}else{
+							if (!clear(this.cache[key].data))
+								delete this.cache[key];
 						}
 					}
 				}
-				return true;
-			};
-
-
-			for(const key in this.cache) {
-				if (this.cache[key].group === group) {
-					if (Array.isArray(this.cache[key].data)) {
-						this.cache[key].data = Object.values(this.cache[key].data).filter(clear);
-					}else{
-						if (!clear(this.cache[key].data))
-							delete this.cache[key];
+			}else{
+				for(const key in this.cache) {
+					if (this.cache[key].group === group) {
+						delete this.cache[key];
 					}
 				}
 			}
-		}else{
-			for(const key in this.cache) {
-				if (this.cache[key].group === group) {
-					delete this.cache[key];
-				}
-			}
-		}
+		});
 	}
 
 	private setDataTree(obj: any, path: string, val: any) { 
@@ -111,8 +127,7 @@ abstract class Core {
 		return obj;
 	};
 
-	public updateCacheGroup(group: string, data: TData, fieldKey: string | null = 'id'): void {
-
+	public updateCacheGroup(groups: string | string[], data: TData, fieldKey: string | null = 'id'): void {
 		const update = (cacheData: any) => {
 			const retData = cacheData;
 			
@@ -133,15 +148,17 @@ abstract class Core {
 			return retData;
 		};
 
-		for(const key in this.cache) {
-			if (this.cache[key].group === group) {
-				if (Array.isArray(this.cache[key].data)) {
-					this.cache[key].data = Object.values(this.cache[key].data).map(update);
-				}else{
-					this.cache[key].data = update(this.cache[key].data);
+		this.groupFromArray(groups, (group) => {
+			for(const key in this.cache) {
+				if (this.cache[key].group === group) {
+					if (Array.isArray(this.cache[key].data)) {
+						this.cache[key].data = Object.values(this.cache[key].data).map(update);
+					}else{
+						this.cache[key].data = update(this.cache[key].data);
+					}
 				}
 			}
-		}
+		});
 	}
 
 	public appendCacheGroup(group: string, data: TData): void {

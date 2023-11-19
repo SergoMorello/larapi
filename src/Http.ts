@@ -10,7 +10,8 @@ import type {
 	TParams,
 	TData,
 	TRequestParams,
-	TListenerEvents
+	TListenerEvents,
+	TCacheControll
 } from "./types";
 
 class Http extends Core {
@@ -82,6 +83,9 @@ class Http extends Core {
 			}
 		}
 		if (this.params.cache) {
+			if (typeof this.params.cache === 'string') {
+				this.events.addListener('trigger-request-by-cache-' + this.params.cache, this.request);
+			}
 			if (this.currentCache = this.getCache(this.cacheIndex)) {
 				this.success(this.currentCache);
 				this.complete(this.currentCache);
@@ -104,17 +108,23 @@ class Http extends Core {
 		if (typeof this.params.success === 'function')
 			this.params.success(...args);
 		if (this.params.cacheUpdate && this.params.data) {
-			this.updateCacheGroup(
-				typeof this.params.cacheUpdate === 'string' ? this.params.cacheUpdate : this.params.cacheUpdate.group,
-				this.params.data,
-				typeof this.params.cacheUpdate === 'string' ? undefined : this.params.cacheUpdate.fieldKey);
+			this.groupFromArray<TCacheControll>(this.params.cacheUpdate, (cacheUpdate) => {
+				this.updateCacheGroup(
+					typeof cacheUpdate === 'string' ? cacheUpdate : cacheUpdate.group,
+					this.params.data ?? {},
+					typeof cacheUpdate === 'string' ? undefined : cacheUpdate.fieldKey);
+			});
+			
 		}
 		
 		if (this.params.cacheClear && this.params.data) {
-			this.clearCacheGroup(
-				typeof this.params.cacheClear === 'string' ? this.params.cacheClear : this.params.cacheClear.group,
-				this.params.data,
-				typeof this.params.cacheClear === 'string' ? undefined : this.params.cacheClear.fieldKey);
+			this.groupFromArray<TCacheControll>(this.params.cacheClear, (cacheClear) => {
+				this.clearCacheGroup(
+					typeof cacheClear === 'string' ? cacheClear : cacheClear.group,
+					this.params.data,
+					typeof cacheClear === 'string' ? undefined : cacheClear.fieldKey);
+			});
+			
 		}
 		this.setEmit('api-request-success', args);
 	}

@@ -53,7 +53,9 @@ declare class API<USER extends TUser = TUser> extends Core {
     static setToken: (token: string) => void;
     static addListener: (event: TListenerEvents, callback: (data: any) => void) => Event;
     static setInitData: (data: import("./types").TGroupsData) => void;
-    static clearCacheGroup: (group: string, data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
+    static triggerByCacheGroup: (groups: string | string[]) => void;
+    static clearCacheGroup: (groups: string | string[], data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
+    static updateCacheGroup: (groups: string | string[], data: import("./types").TData, fieldKey?: string | null) => void;
     static getToken: () => string | undefined;
     static getUid: () => number;
     static getUser: () => TUser;
@@ -62,7 +64,7 @@ declare class API<USER extends TUser = TUser> extends Core {
     /**
      * @deprecated The method should not be used
      */
-    static deleteCacheGroup: (group: string, data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
+    static deleteCacheGroup: (groups: string | string[], data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
 }
 export type { Event };
 export default API;

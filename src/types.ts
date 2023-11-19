@@ -27,8 +27,8 @@ export type TParams = {
 	path: string;
 	data?: TData;
 	cache?: string | boolean;
-	cacheUpdate?: TCacheControll;
-	cacheClear?: TCacheControll;
+	cacheUpdate?: TCacheControll | TCacheControll[];
+	cacheClear?: TCacheControll | TCacheControll[];
 	globalName?: string;
 	success?: (...args: any) => void;
 	error?: (...args: any) => void;
