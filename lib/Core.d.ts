@@ -10,7 +10,7 @@ declare abstract class Core {
     protected isJsonString(str: string): boolean;
     setHost(host: string): void;
     protected setCache(key: string, data: TData, group?: string): void;
-    protected groupFromArray<T = string>(groups: T | T[], callback: (group: T) => void): void;
+    protected groupFromArray<T = string>(groups: T | T[], callback: (group: T, params?: string[]) => void, withoutSplit?: boolean): void;
     triggerByCacheGroup(groups: string | string[]): void;
     clearCacheGroup(groups: string | string[], data?: TData, fieldKey?: string | null): void;
     private setDataTree;

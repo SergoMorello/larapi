@@ -67,11 +67,21 @@ abstract class Core {
 		};
 	}
 
-	protected groupFromArray<T = string>(groups: T | T[], callback: (group: T) => void): void {
+	protected groupFromArray<T = string>(groups: T | T[], callback: (group: T, params?: string[]) => void, withoutSplit: boolean = false): void {
+		const currentCallback = (group: T) => {
+			if (typeof group === 'string' && !withoutSplit) {
+				const params = group.split('.');
+				const current = params.shift() as T;
+				callback(current, params);
+			}else{
+				callback(group);
+			}
+		};
+
 		if (Array.isArray(groups)) {
-			groups.map(callback);
+			groups.map(currentCallback);
 		}else if (typeof groups === 'string') {
-			callback(groups);
+			currentCallback(groups);
 		}
 	}
 
@@ -121,7 +131,7 @@ abstract class Core {
 		const lastObj = keys.reduce((obj, key) => 
 			obj[key] = obj[key] || {}, 
 			obj);
-		if (typeof lastKey === 'number') {
+		if (typeof lastKey === 'string') {
 			lastObj[lastKey] = val;
 		}
 		return obj;
@@ -147,8 +157,8 @@ abstract class Core {
 			}
 			return retData;
 		};
-
-		this.groupFromArray(groups, (group) => {
+		
+		this.groupFromArray(groups, (group, params) => {
 			for(const key in this.cache) {
 				if (this.cache[key].group === group) {
 					if (Array.isArray(this.cache[key].data)) {

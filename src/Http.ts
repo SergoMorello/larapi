@@ -108,13 +108,12 @@ class Http extends Core {
 		if (typeof this.params.success === 'function')
 			this.params.success(...args);
 		if (this.params.cacheUpdate && this.params.data) {
-			this.groupFromArray<TCacheControll>(this.params.cacheUpdate, (cacheUpdate) => {
+			this.groupFromArray<TCacheControll>(this.params.cacheUpdate, (cacheUpdate, params) => {
 				this.updateCacheGroup(
 					typeof cacheUpdate === 'string' ? cacheUpdate : cacheUpdate.group,
 					this.params.data ?? {},
 					typeof cacheUpdate === 'string' ? undefined : cacheUpdate.fieldKey);
-			});
-			
+			}, true);
 		}
 		
 		if (this.params.cacheClear && this.params.data) {
@@ -124,7 +123,6 @@ class Http extends Core {
 					this.params.data,
 					typeof cacheClear === 'string' ? undefined : cacheClear.fieldKey);
 			});
-			
 		}
 		this.setEmit('api-request-success', args);
 	}
