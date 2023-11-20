@@ -11,7 +11,8 @@ import type {
 	TData,
 	TRequestParams,
 	TListenerEvents,
-	TCacheControll
+	TCacheControll,
+	TRequestProgress
 } from "./types";
 
 class Http extends Core {
@@ -33,11 +34,12 @@ class Http extends Core {
 		this.requestParams = {
 			method: this.method
 		};
-
+		
 		this.success = this.success.bind(this);
 		this.fail = this.fail.bind(this);
 		this.error = this.error.bind(this);
 		this.complete = this.complete.bind(this);
+		this.progress = this.progress.bind(this);
 		this.setEmit = this.setEmit.bind(this);
 		this.request = this.request.bind(this);
 		this.addHeader = this.addHeader.bind(this);
@@ -153,6 +155,14 @@ class Http extends Core {
 		this.setEmit('api-request-complete', args);
 	}
 
+	public progress(progress: TRequestProgress) {
+		if (typeof this.params.progress === 'function') {
+			this.params.progress(progress);
+		}	
+
+		this.setEmit('api-request-progress', progress);
+	}
+
 	private encodeUrlParams(data: TData) {
 		return Object.keys(data).map(function(k) {
 			return encodeURIComponent(k) + "=" + encodeURIComponent(data[k]);
@@ -180,6 +190,16 @@ class Http extends Core {
 			xhr.open(this.method, this.host + this.path, true);
 			for(const header in this.requestParams.headers) {
 				xhr.setRequestHeader(header, this.requestParams.headers[header]);
+			}
+
+			xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
+				if (lengthComputable) {
+					this.progress({
+						percent: (loaded / total * 100),
+						total,
+						loaded
+					});
+				}
 			}
 
 			xhr.onreadystatechange = () => {

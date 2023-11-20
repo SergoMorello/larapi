@@ -1,6 +1,6 @@
 import Core from "./Core";
 import { Event, Events } from "easy-event-emitter";
-import type { TMethod, TParams, TData, TRequestParams, TListenerEvents } from "./types";
+import type { TMethod, TParams, TData, TRequestParams, TListenerEvents, TRequestProgress } from "./types";
 declare class Http extends Core {
     private cacheIndex;
     currentCache?: TData;
@@ -17,6 +17,7 @@ declare class Http extends Core {
     fail(...args: any): void;
     error(...args: any): void;
     complete(...args: any): void;
+    progress(progress: TRequestProgress): void;
     private encodeUrlParams;
     private cuteUndifinedParams;
     request(): this;

@@ -23,6 +23,12 @@ export type TCacheControll = string | {
 	fieldKey: string;
 };
 
+export type TRequestProgress = {
+	percent: number;
+	total: number;
+	loaded: number;
+}
+
 export type TParams = {
 	path: string;
 	data?: TData;
@@ -34,6 +40,7 @@ export type TParams = {
 	error?: (...args: any) => void;
 	fail?: (...args: any) => void;
 	complete?: (...args: any) => void;
+	progress?: (progress: TRequestProgress) => void;
 }
 
 export type TRequestParams = {
@@ -45,4 +52,4 @@ export type TRequestParams = {
 	withoutResponse?: boolean;
 }
 
-export type TListenerEvents = 'api-request-success' | 'api-request-fail' | 'api-request-error' | 'api-request-complete' | 'login' | 'logout' | 'user-update';
+export type TListenerEvents = 'api-request-success' | 'api-request-fail' | 'api-request-error' | 'api-request-complete' | 'api-request-progress' | 'login' | 'logout' | 'user-update';
