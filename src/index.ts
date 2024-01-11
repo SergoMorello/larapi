@@ -102,11 +102,11 @@ class API<USER extends TUser = TUser> extends Core {
 			const token = await AsyncStorage.getItem('token');
 			const strUser = await AsyncStorage.getItem('user');
 			if (strUser) {
-			const user: USER = JSON.parse(strUser);
-			this.setUser(user);
+				const user: USER = JSON.parse(strUser);
+				this.setUser(user);
 			}
 			if (token) {
-			this.setToken(token);
+				this.setToken(token);
 			}
 		} catch(e) {}
 	}
@@ -116,7 +116,9 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public async setToken(token: string) {
-		await AsyncStorage.setItem('token', token);
+		try {
+			await AsyncStorage.setItem('token', token);
+		} catch(e) {}
 		this.token = token;
 	}
 
@@ -141,7 +143,9 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public async setUser(user: USER) {
-		await AsyncStorage.setItem('user', JSON.stringify(user));
+		try {
+			await AsyncStorage.setItem('user', JSON.stringify(user));
+		} catch(e) {}
 		this._user = user;
 		this.events.emit('login', user);
 	}
@@ -153,8 +157,10 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public async logout() {
-		await AsyncStorage.removeItem('user');
-		await AsyncStorage.removeItem('token');
+		try {
+			await AsyncStorage.removeItem('user');
+			await AsyncStorage.removeItem('token');
+		} catch(e) {}
 		const user = this.user;
 		this.setUser({} as USER);
 		this.setToken('');
