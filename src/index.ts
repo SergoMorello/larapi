@@ -7,6 +7,7 @@ import type {
 import type {
 	Event
 } from "easy-event-emitter";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Http from "./Http";
 
 type TUser = {
@@ -96,17 +97,18 @@ class API<USER extends TUser = TUser> extends Core {
 		return this.http('TRACE', params).request();
 	}
 
-	private init(): void {
-		if (typeof window === 'undefined') return;
-		const token = localStorage.getItem('token');
-		const strUser = localStorage.getItem('user');
-		if (strUser) {
+	private async init() {
+		try {
+			const token = await AsyncStorage.getItem('token');
+			const strUser = await AsyncStorage.getItem('user');
+			if (strUser) {
 			const user: USER = JSON.parse(strUser);
 			this.setUser(user);
-		}
-		if (token) {
+			}
+			if (token) {
 			this.setToken(token);
-		}
+			}
+		} catch(e) {}
 	}
 
 	public addListener(event: TListenerEvents, callback: (data: any) => void): Event {
@@ -114,8 +116,7 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public setToken(token: string) {
-		if (typeof window === 'undefined') return;
-		localStorage.setItem('token', token);
+		AsyncStorage.setItem('token', token);
 		this.token = token;
 	}
 
@@ -140,8 +141,7 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public setUser(user: USER) {
-		if (typeof window === 'undefined') return;
-		localStorage.setItem('user', JSON.stringify(user));
+		AsyncStorage.setItem('user', JSON.stringify(user));
 		this._user = user;
 		this.events.emit('login', user);
 	}
@@ -153,9 +153,8 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public logout() {
-		if (typeof window === 'undefined') return;
-		localStorage.removeItem('user');
-		localStorage.removeItem('token');
+		AsyncStorage.removeItem('user');
+		AsyncStorage.removeItem('token');
 		const user = this.user;
 		this.setUser({} as USER);
 		this.setToken('');
