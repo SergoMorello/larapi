@@ -115,8 +115,8 @@ class API<USER extends TUser = TUser> extends Core {
 		return this.events.addListener(event, callback);
 	}
 
-	public setToken(token: string) {
-		AsyncStorage.setItem('token', token);
+	public async setToken(token: string) {
+		await AsyncStorage.setItem('token', token);
 		this.token = token;
 	}
 
@@ -140,8 +140,8 @@ class API<USER extends TUser = TUser> extends Core {
 		return this.getUser();
 	}
 
-	public setUser(user: USER) {
-		AsyncStorage.setItem('user', JSON.stringify(user));
+	public async setUser(user: USER) {
+		await AsyncStorage.setItem('user', JSON.stringify(user));
 		this._user = user;
 		this.events.emit('login', user);
 	}
@@ -152,9 +152,9 @@ class API<USER extends TUser = TUser> extends Core {
 		this.events.emit('user-update', updatedUser);
 	}
 
-	public logout() {
-		AsyncStorage.removeItem('user');
-		AsyncStorage.removeItem('token');
+	public async logout() {
+		await AsyncStorage.removeItem('user');
+		await AsyncStorage.removeItem('token');
 		const user = this.user;
 		this.setUser({} as USER);
 		this.setToken('');
