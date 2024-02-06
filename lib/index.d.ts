@@ -25,7 +25,6 @@ declare class API<USER extends TUser = TUser> extends Core {
     options(params: TParams): Http;
     connect(params: TParams): Http;
     trace(params: TParams): Http;
-    private init;
     addListener(event: TListenerEvents, callback: (data: any) => void): Event;
     setToken(token: string): Promise<void>;
     getToken(): string | undefined;
