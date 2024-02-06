@@ -23,11 +23,13 @@ class Http extends Core {
 		method: TMethod;
 		params: TParams;
 		path: string;
+		queueName: string;
 
 	constructor(method: TMethod, params: TParams, context?: Core) {
 		super(context);
 		this.currentEvents = new EventEmitter();
 		this.cacheIndex = '';
+		this.queueName = '';
 		this.method = method;
 		this.params = params;
 		this.path = this.params.path;
@@ -47,6 +49,7 @@ class Http extends Core {
 
 		this.initRequest();
 		this.initCache();
+		this.initQueue();
 	}
 
 	private initRequest(): void {
@@ -95,6 +98,10 @@ class Http extends Core {
 		}else{
 			this.deleteCache(this.cacheIndex);
 		}
+	}
+
+	private initQueue(): void {
+		this.queueName = this.params.queueThrottling ? md5(this.path) : this.cacheIndex;
 	}
 
 	private setEmit(event: TListenerEvents, args: any) {
@@ -182,7 +189,7 @@ class Http extends Core {
 	}
 
 	public request(): this {
-		if (typeof XMLHttpRequest === 'undefined' || this.currentCache || Queue.push(this.cacheIndex, this)) return this;
+		if (typeof XMLHttpRequest === 'undefined' || this.currentCache || Queue.push(this.queueName, this)) return this;
 		
 		try {
 			const xhr = new XMLHttpRequest();
@@ -221,7 +228,7 @@ class Http extends Core {
 					console.warn(result);
 				}
 				this.complete(result);
-				Queue.clear(this.cacheIndex);
+				Queue.clear(this.queueName);
 			}
 			xhr.send(this.requestParams.body);
 		}catch(e) {

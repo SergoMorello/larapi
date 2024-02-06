@@ -36,6 +36,7 @@ export type TParams = {
 	cacheUpdate?: TCacheControll | TCacheControll[];
 	cacheClear?: TCacheControll | TCacheControll[];
 	globalName?: string;
+	queueThrottling?: boolean;
 	success?: (...args: any) => void;
 	error?: (...args: any) => void;
 	fail?: (...args: any) => void;

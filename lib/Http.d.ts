@@ -9,9 +9,11 @@ declare class Http extends Core {
     method: TMethod;
     params: TParams;
     path: string;
+    queueName: string;
     constructor(method: TMethod, params: TParams, context?: Core);
     private initRequest;
     private initCache;
+    private initQueue;
     private setEmit;
     success(...args: any): void;
     fail(...args: any): void;
