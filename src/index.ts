@@ -7,7 +7,6 @@ import type {
 import type {
 	Event
 } from "easy-event-emitter";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Http from "./Http";
 
 type TUser = {
@@ -31,7 +30,6 @@ class API<USER extends TUser = TUser> extends Core {
 		super();
 		this.setHost(config.host);
 		this._user = {} as USER;
-		this.init();
 
 		this.setToken = this.setToken.bind(this);
 		this.setUser = this.setUser.bind(this);
@@ -97,28 +95,11 @@ class API<USER extends TUser = TUser> extends Core {
 		return this.http('TRACE', params).request();
 	}
 
-	private async init() {
-		try {
-			const token = await AsyncStorage.getItem('token');
-			const strUser = await AsyncStorage.getItem('user');
-			if (strUser) {
-				const user: USER = JSON.parse(strUser);
-				this.setUser(user);
-			}
-			if (token) {
-				this.setToken(token);
-			}
-		} catch(e) {}
-	}
-
 	public addListener(event: TListenerEvents, callback: (data: any) => void): Event {
 		return this.events.addListener(event, callback);
 	}
 
 	public async setToken(token: string) {
-		try {
-			await AsyncStorage.setItem('token', token);
-		} catch(e) {}
 		this.token = token;
 	}
 
@@ -143,9 +124,6 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public async setUser(user: USER) {
-		try {
-			await AsyncStorage.setItem('user', JSON.stringify(user));
-		} catch(e) {}
 		this._user = user;
 		this.events.emit('login', user);
 	}
@@ -157,10 +135,6 @@ class API<USER extends TUser = TUser> extends Core {
 	}
 
 	public async logout() {
-		try {
-			await AsyncStorage.removeItem('user');
-			await AsyncStorage.removeItem('token');
-		} catch(e) {}
 		const user = this.user;
 		this.setUser({} as USER);
 		this.setToken('');
