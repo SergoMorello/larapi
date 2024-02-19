@@ -192,45 +192,47 @@ class Http extends Core {
 		if (typeof XMLHttpRequest === 'undefined' || this.currentCache || Queue.push(this.queueName, this)) return this;
 		
 		try {
-			const xhr = new XMLHttpRequest();
+			(async () => {
+				const xhr = new XMLHttpRequest();
 
-			xhr.open(this.method, this.host + this.path, true);
-			for(const header in this.requestParams.headers) {
-				xhr.setRequestHeader(header, this.requestParams.headers[header]);
-			}
-
-			xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
-				if (lengthComputable) {
-					this.progress({
-						percent: (loaded / total * 100),
-						total,
-						loaded
-					});
+				xhr.open(this.method, this.host + this.path, true);
+				for(const header in this.requestParams.headers) {
+					xhr.setRequestHeader(header, this.requestParams.headers[header]);
 				}
-			}
-
-			xhr.onreadystatechange = () => {
-				if (xhr.readyState !== 4) return;
-				
-				const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? JSON.parse(xhr.responseText) : {};
-
-				if (xhr.status >= 200 && xhr.status <= 299) {
-					if (this.params.cache) {
-						this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
+	
+				xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
+					if (lengthComputable) {
+						this.progress({
+							percent: (loaded / total * 100),
+							total,
+							loaded
+						});
 					}
-					this.success(result);
-				}else{
-					if (xhr.status >= 400 && xhr.status <= 499) {
-						this.fail(result);
-					}
+				}
+	
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState !== 4) return;
 					
-					this.error(result);
-					console.warn(result);
+					const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? JSON.parse(xhr.responseText) : {};
+	
+					if (xhr.status >= 200 && xhr.status <= 299) {
+						if (this.params.cache) {
+							this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
+						}
+						this.success(result);
+					}else{
+						if (xhr.status >= 400 && xhr.status <= 499) {
+							this.fail(result);
+						}
+						
+						this.error(result);
+						console.warn(result);
+					}
+					this.complete(result);
+					Queue.clear(this.queueName);
 				}
-				this.complete(result);
-				Queue.clear(this.queueName);
-			}
-			xhr.send(this.requestParams.body);
+				xhr.send(this.requestParams.body);
+			})();
 		}catch(e) {
 			console.warn(e);
 			throw e;
