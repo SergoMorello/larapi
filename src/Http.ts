@@ -192,14 +192,14 @@ class Http extends Core {
 		if (typeof XMLHttpRequest === 'undefined' || this.currentCache || Queue.push(this.queueName, this)) return this;
 		
 		try {
-			(async () => {
-				const xhr = new XMLHttpRequest();
+			const xhr = new XMLHttpRequest();
+			
+			xhr.open(this.method, this.host + this.path, true);
+			for(const header in this.requestParams.headers) {
+				xhr.setRequestHeader(header, this.requestParams.headers[header]);
+			}
 
-				xhr.open(this.method, this.host + this.path, true);
-				for(const header in this.requestParams.headers) {
-					xhr.setRequestHeader(header, this.requestParams.headers[header]);
-				}
-				
+			if (xhr.upload) {
 				xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
 					if (lengthComputable) {
 						this.progress({
@@ -209,30 +209,30 @@ class Http extends Core {
 						});
 					}
 				}
-	
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState !== 4) return;
-					
-					const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? JSON.parse(xhr.responseText) : {};
-	
-					if (xhr.status >= 200 && xhr.status <= 299) {
-						if (this.params.cache) {
-							this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
-						}
-						this.success(result);
-					}else{
-						if (xhr.status >= 400 && xhr.status <= 499) {
-							this.fail(result);
-						}
-						
-						this.error(result);
-						console.warn(result);
+			}
+
+			xhr.onreadystatechange = () => {
+				if (xhr.readyState !== 4) return;
+				
+				const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? JSON.parse(xhr.responseText) : {};
+
+				if (xhr.status >= 200 && xhr.status <= 299) {
+					if (this.params.cache) {
+						this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
 					}
-					this.complete(result);
-					Queue.clear(this.queueName);
+					this.success(result);
+				}else{
+					if (xhr.status >= 400 && xhr.status <= 499) {
+						this.fail(result);
+					}
+					
+					this.error(result);
+					console.warn(result);
 				}
-				xhr.send(this.requestParams.body);
-			})();
+				this.complete(result);
+				Queue.clear(this.queueName);
+			}
+			xhr.send(this.requestParams.body);
 		}catch(e) {
 			console.warn(e);
 			throw e;
