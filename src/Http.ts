@@ -199,7 +199,7 @@ class Http extends Core {
 				for(const header in this.requestParams.headers) {
 					xhr.setRequestHeader(header, this.requestParams.headers[header]);
 				}
-	
+				
 				xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
 					if (lengthComputable) {
 						this.progress({
