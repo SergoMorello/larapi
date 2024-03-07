@@ -113,9 +113,9 @@ class Http extends Core {
 	}
 
 	//Заголовки от 200 до 299
-	public success(...args: any) {
+	public success(data: any) {
 		if (typeof this.params.success === 'function')
-			this.params.success(...args);
+			this.params.success(data);
 		if (this.params.cacheUpdate && this.params.data) {
 			this.groupFromArray<TCacheControll>(this.params.cacheUpdate, (cacheUpdate, params) => {
 				this.updateCacheGroup(
@@ -133,33 +133,33 @@ class Http extends Core {
 					typeof cacheClear === 'string' ? undefined : cacheClear.fieldKey);
 			});
 		}
-		this.setEmit('api-request-success', args);
+		this.setEmit('api-request-success', data);
 	}
 
 	//Заголовки от 400 до 499
-	public fail(...args: any) {
+	public fail(data: any) {
 		if (typeof this.params.fail === 'function') {
-			this.params.fail(...args);
+			this.params.fail(data);
 		}
 		
-		this.setEmit('api-request-fail', args);
+		this.setEmit('api-request-fail', data);
 	}
 
 	//Все остальные
-	public error(...args: any) {
+	public error(data: any) {
 		if (typeof this.params.error === 'function') {
-			this.params.error(...args);
+			this.params.error(data);
 		}
 		
-		this.setEmit('api-request-error', args);
+		this.setEmit('api-request-error', data);
 	}
 
-	public complete(...args: any) {
+	public complete(data: any) {
 		if (typeof this.params.complete === 'function') {
-			this.params.complete(...args);
+			this.params.complete(data);
 		}	
 
-		this.setEmit('api-request-complete', args);
+		this.setEmit('api-request-complete', data);
 	}
 
 	public progress(progress: TRequestProgress) {
@@ -210,6 +210,18 @@ class Http extends Core {
 					}
 				}
 			}
+
+			xhr.onabort = () => {
+				this.fail({
+					message: 'request abort'
+				});
+			};
+
+			xhr.onerror = () => {
+				this.error({
+					message: 'request error'
+				});
+			};
 
 			xhr.onreadystatechange = () => {
 				if (xhr.readyState !== 4) return;

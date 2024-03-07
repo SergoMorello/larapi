@@ -12,11 +12,11 @@ import Http from "./Http";
 type TUser = {
 	id: number;
 	[index: string]: any;
-}
+};
 
 type TConfig = {
 	host: string;
-}
+};
 
 /** Laravel API Client */
 class API<USER extends TUser = TUser> extends Core {

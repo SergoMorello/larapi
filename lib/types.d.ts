@@ -30,10 +30,10 @@ export type TParams = {
     cacheClear?: TCacheControll | TCacheControll[];
     globalName?: string;
     queueThrottling?: boolean;
-    success?: (...args: any) => void;
-    error?: (...args: any) => void;
-    fail?: (...args: any) => void;
-    complete?: (...args: any) => void;
+    success?: (data: any) => void;
+    error?: (data: any) => void;
+    fail?: (data: any) => void;
+    complete?: (data: any) => void;
     progress?: (progress: TRequestProgress) => void;
 };
 export type TRequestParams = {

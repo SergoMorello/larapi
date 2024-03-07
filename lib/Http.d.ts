@@ -15,10 +15,10 @@ declare class Http extends Core {
     private initCache;
     private initQueue;
     private setEmit;
-    success(...args: any): void;
-    fail(...args: any): void;
-    error(...args: any): void;
-    complete(...args: any): void;
+    success(data: any): void;
+    fail(data: any): void;
+    error(data: any): void;
+    complete(data: any): void;
     progress(progress: TRequestProgress): void;
     private encodeUrlParams;
     private cuteUndifinedParams;
