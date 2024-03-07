@@ -104,11 +104,11 @@ class Http extends Core {
 		this.queueName = this.params.queueThrottling ? md5(this.path) : this.cacheIndex;
 	}
 
-	private setEmit(event: TListenerEvents, args: any) {
-		this.currentEvents.emit(event, args[0]);
+	private setEmit(event: TListenerEvents, data: any) {
+		this.currentEvents.emit(event, data);
 		this.events.emit(event, {
 			cacheIndex: this.cacheIndex,
-			args: args[0]
+			data
 		});
 	}
 
