@@ -22,6 +22,14 @@ export type TRequestProgress = {
     total: number;
     loaded: number;
 };
+export type TConfigDataReplace = {
+    [index: string]: (value: any) => any;
+};
+export type TConfig = {
+    host: string;
+    dataReplaceCallback?: (this: any, key: string, value: any) => any;
+    dataReplace?: TConfigDataReplace;
+};
 export type TParams = {
     path: string;
     data?: TData;

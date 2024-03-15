@@ -2,6 +2,7 @@ import EventEmitter,{
 	Events
 } from 'easy-event-emitter';
 import type {
+	TConfig,
 	TCache,
 	TCacheBody,
 	TData,
@@ -11,16 +12,19 @@ import type {
 abstract class Core {
 	private cache: TCache;
 		initData: TGroupsData;
-	protected events: Events;
-		host: string;
+	protected readonly events: Events;
+		config: TConfig;
 		
 
 	constructor(context?: Core) {
 		this.events = new EventEmitter();
-		this.host = 'http://127.0.0.1/';
+		this.config = {
+			host: 'http://127.0.0.1/'
+		};
 		this.cache = {};
 		this.initData = {};
 
+		this.setConfig = this.setConfig.bind(this);
 		this.setHost = this.setHost.bind(this);
 		this.setInitData = this.setInitData.bind(this);
 		this.triggerByCacheGroup = this.triggerByCacheGroup.bind(this);
@@ -28,12 +32,16 @@ abstract class Core {
 		this.updateCacheGroup = this.updateCacheGroup.bind(this);
 		if (context) {
 			Object.assign(this, {
-				host: context?.host,
+				config: context?.config,
 				events: context?.events,
 				cache: context?.cache,
 				initData: context?.initData
 			});
 		}
+	}
+
+	protected setConfig(config: TConfig) {
+		this.config = config;
 	}
 
 	protected getCache(key: string): TData | undefined {
@@ -55,8 +63,29 @@ abstract class Core {
 		return true;
 	}
 
+	protected jsonParse(str: string) {
+		if (typeof this.config.dataReplaceCallback === 'function') {
+			return JSON.parse(str, this.config.dataReplaceCallback);
+		}
+
+		if (this.config.dataReplace) {
+			const replace = this.config.dataReplace;
+			return JSON.parse(str, (key, value) => {
+				if (key === "createdAt" || key === "updatedAt") {
+					return new Date(value);
+				}
+				if (key in replace && typeof replace[key] === 'function') {
+					return replace[key](value);
+				}
+				return value;
+			});
+		}
+		
+		return JSON.parse(str);
+	}
+
 	public setHost(host: string): void {
-		this.host = host;
+		this.config.host = host;
 	}
 
 	protected setCache(key: string, data: TData, group?: string): void {

@@ -1,5 +1,6 @@
 import Core from "./Core";
 import type {
+	TConfig,
 	TMethod,
 	TParams,
 	TListenerEvents
@@ -14,10 +15,6 @@ type TUser = {
 	[index: string]: any;
 };
 
-type TConfig = {
-	host: string;
-};
-
 /** Laravel API Client */
 class API<USER extends TUser = TUser> extends Core {
 	private static instance = new API({
@@ -28,7 +25,7 @@ class API<USER extends TUser = TUser> extends Core {
 
 	constructor(config: TConfig) {
 		super();
-		this.setHost(config.host);
+		this.setConfig(config);
 		this._user = {} as USER;
 
 		this.setToken = this.setToken.bind(this);
@@ -151,6 +148,7 @@ class API<USER extends TUser = TUser> extends Core {
 	public static options = this.instance.options;
 	public static connect = this.instance.connect;
 	public static trace = this.instance.trace;
+	public static setConfig = this.instance.setConfig;
 	public static setHost = this.instance.setHost;
 	public static setUser = this.instance.setUser;
 	public static updateUser = this.instance.updateUser;

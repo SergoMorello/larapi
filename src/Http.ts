@@ -194,7 +194,7 @@ class Http extends Core {
 		try {
 			const xhr = new XMLHttpRequest();
 			
-			xhr.open(this.method, this.host + this.path, true);
+			xhr.open(this.method, this.config.host + this.path, true);
 			for(const header in this.requestParams.headers) {
 				xhr.setRequestHeader(header, this.requestParams.headers[header]);
 			}
@@ -226,7 +226,7 @@ class Http extends Core {
 			xhr.onreadystatechange = () => {
 				if (xhr.readyState !== 4) return;
 				
-				const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? JSON.parse(xhr.responseText) : {};
+				const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? this.jsonParse(xhr.responseText) : {};
 
 				if (xhr.status >= 200 && xhr.status <= 299) {
 					if (this.params.cache) {

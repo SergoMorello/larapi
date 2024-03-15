@@ -1,13 +1,10 @@
 import Core from "./Core";
-import type { TMethod, TParams, TListenerEvents } from "./types";
+import type { TConfig, TMethod, TParams, TListenerEvents } from "./types";
 import type { Event } from "easy-event-emitter";
 import Http from "./Http";
 type TUser = {
     id: number;
     [index: string]: any;
-};
-type TConfig = {
-    host: string;
 };
 /** Laravel API Client */
 declare class API<USER extends TUser = TUser> extends Core {
@@ -45,6 +42,7 @@ declare class API<USER extends TUser = TUser> extends Core {
     static options: (params: TParams) => Http;
     static connect: (params: TParams) => Http;
     static trace: (params: TParams) => Http;
+    static setConfig: (config: TConfig) => void;
     static setHost: (host: string) => void;
     static setUser: (user: TUser) => Promise<void>;
     static updateUser: (user: TUser) => void;
