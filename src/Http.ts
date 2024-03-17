@@ -12,27 +12,30 @@ import type {
 	TRequestParams,
 	TListenerEvents,
 	TCacheControll,
-	TRequestProgress
+	TRequestProgress,
+	TResolveData
 } from "./types";
 
-class Http extends Core {
+class Http<DATA extends TResolveData = TResolveData> extends Core {
 	private cacheIndex: string;
 		currentCache?: TData;
 		currentEvents: Events
 		requestParams: TRequestParams;
 		method: TMethod;
-		params: TParams;
+		params: TParams<DATA>;
 		path: string;
+		queue: Queue<DATA>;
 		queueName: string;
 
-	constructor(method: TMethod, params: TParams, context?: Core) {
+	constructor(method: TMethod, params: TParams<DATA>, context?: Core) {
 		super(context);
 		this.currentEvents = new EventEmitter();
+		this.queue = new Queue<DATA>(this);
 		this.cacheIndex = '';
 		this.queueName = '';
 		this.method = method;
 		this.params = params;
-		this.path = this.params.path;
+		this.path = this.params.path as string;
 		this.requestParams = {
 			method: this.method
 		};
@@ -62,7 +65,7 @@ class Http extends Core {
 
 		if ((['GET', 'HEAD'] as TMethod[]).includes(this.method)) {
 			if (this.params.data)
-				this.path = this.params.path + '?' + this.encodeUrlParams(this.params.data);
+				this.path = (this.params.path as string) + '?' + this.encodeUrlParams(this.params.data);
 
 			if (this.method === 'HEAD') {
 				this.requestParams.withoutResponse = true;
@@ -189,7 +192,7 @@ class Http extends Core {
 	}
 
 	public request(): this {
-		if (typeof XMLHttpRequest === 'undefined' || this.currentCache || Queue.push(this.queueName, this)) return this;
+		if (typeof XMLHttpRequest === 'undefined' || this.currentCache || this.queue.push(this.queueName)) return this;
 		
 		try {
 			const xhr = new XMLHttpRequest();
@@ -242,7 +245,7 @@ class Http extends Core {
 					console.warn(result);
 				}
 				this.complete(result);
-				Queue.clear(this.queueName);
+				this.queue.clear(this.queueName);
 			}
 			xhr.send(this.requestParams.body);
 		}catch(e) {

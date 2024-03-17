@@ -1,14 +1,17 @@
 import Http from "./Http";
+import type { TResolveData } from "./types";
 
 type TQueue = {
 	[index: string]: Http;
 };
 
-class Queue {
-	private static instance = new Queue;
-	private queue: TQueue = {};
+class Queue<DATA extends TResolveData = TResolveData> {
+	private static _Queue: TQueue = {};
+	private queue = Queue._Queue;
+		http: Http<DATA>;
 
-	constructor() {
+	constructor(http: Http<DATA>) {
+		this.http = http;
 		this.has = this.has.bind(this);
 		this.get = this.get.bind(this);
 		this.clear = this.clear.bind(this);
@@ -29,23 +32,18 @@ class Queue {
 		}
 	}
 
-	public push(request: string, instance: Http): boolean {
+	public push(request: string): boolean {
 		const refInstance = this.get(request);
 		if (!refInstance) {
-			this.queue[request] = instance;
+			(this.queue[request] as any) = this.http;
 		}else{
-			refInstance?.addListener('api-request-success', instance.success);
-			refInstance?.addListener('api-request-error', instance.error);
-			refInstance?.addListener('api-request-fail', instance.fail);
-			refInstance?.addListener('api-request-complete', instance.complete);
+			refInstance?.addListener('api-request-success', this.http.success);
+			refInstance?.addListener('api-request-error', this.http.error);
+			refInstance?.addListener('api-request-fail', this.http.fail);
+			refInstance?.addListener('api-request-complete', this.http.complete);
 		}
 		return refInstance instanceof Http;
 	}
-
-	public static has = this.instance.has;
-	public static get = this.instance.get;
-	public static clear = this.instance.clear;
-	public static push = this.instance.push;
 }
 
 export default Queue;

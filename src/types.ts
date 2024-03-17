@@ -39,17 +39,23 @@ export type TConfig = {
 	dataReplace?: TConfigDataReplace;
 };
 
-export type TParams = {
-	path: string;
+export type TResolveData = {
+	success: TData;
+	error?: TData;
+	fail?: TData;
+};
+
+export type TParams<T extends TResolveData = TResolveData, PATH extends keyof T['success'] = keyof T['success'], DATA extends T['success'][PATH] = T['success'][PATH]> = {
+	path: PATH;
 	data?: TData;
 	cache?: string | boolean;
 	cacheUpdate?: TCacheControll | TCacheControll[];
 	cacheClear?: TCacheControll | TCacheControll[];
 	globalName?: string;
 	queueThrottling?: boolean;
-	success?: (data: any) => void;
-	error?: (data: any) => void;
-	fail?: (data: any) => void;
+	success?: (data: DATA) => void;
+	error?: (data: T['error']) => void;
+	fail?: (data: T['fail']) => void;
 	complete?: (data: any) => void;
 	progress?: (progress: TRequestProgress) => void;
 }

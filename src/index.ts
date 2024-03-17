@@ -3,6 +3,7 @@ import type {
 	TConfig,
 	TMethod,
 	TParams,
+	TResolveData,
 	TListenerEvents
 } from "./types";
 import type {
@@ -16,7 +17,7 @@ type TUser = {
 };
 
 /** Laravel API Client */
-class API<USER extends TUser = TUser> extends Core {
+class API<DATA extends TResolveData = TResolveData, USER extends TUser = TUser> extends Core {
 	private static instance = new API({
 		host: ''
 	});
@@ -48,47 +49,47 @@ class API<USER extends TUser = TUser> extends Core {
 		this.addListener = this.addListener.bind(this);
 	}
 
-	public http(method: TMethod, params: TParams): Http {
-		const http = new Http(method, params, this);
+	public http(method: TMethod, params: TParams<DATA>) {
+		const http = new Http<DATA>(method, params, this);
 		if (this.token) {
 			http.addHeader('Authorization', 'Bearer ' + this.token);
 		}
 		return http;
 	}
 
-	public get(params: TParams): Http {
+	public get(params: TParams<DATA>) {
 		return this.http('GET', params).request();
 	}
 
-	public head(params: TParams): Http {
+	public head(params: TParams<DATA>) {
 		return this.http('HEAD', params).request();
 	}
 
-	public post(params: TParams): Http {
+	public post(params: TParams<DATA>) {
 		return this.http('POST', params).request();
 	}
 
-	public put(params: TParams): Http {
+	public put(params: TParams<DATA>) {
 		return this.http('PUT', params).request();
 	}
 
-	public patch(params: TParams): Http {
+	public patch(params: TParams<DATA>) {
 		return this.http('PATCH', params).request();
 	}
 
-	public delete(params: TParams): Http {
+	public delete(params: TParams<DATA>) {
 		return this.http('DELETE', params).request();
 	}
 
-	public options(params: TParams): Http {
+	public options(params: TParams<DATA>) {
 		return this.http('OPTIONS', params).request();
 	}
 
-	public connect(params: TParams): Http {
+	public connect(params: TParams<DATA>) {
 		return this.http('CONNECT', params).request();
 	}
 
-	public trace(params: TParams): Http {
+	public trace(params: TParams<DATA>) {
 		return this.http('TRACE', params).request();
 	}
 
@@ -173,6 +174,10 @@ class API<USER extends TUser = TUser> extends Core {
 
 (globalThis as any).apiSetInitData = API.setInitData;
 export type {
-	Event
+	/**
+	 * @deprecated The type should not be used
+	 */
+	Event,
+	Event as EventListener
 };
 export default API;

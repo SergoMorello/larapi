@@ -1,15 +1,13 @@
 import Http from "./Http";
-declare class Queue {
-    private static instance;
+import type { TResolveData } from "./types";
+declare class Queue<DATA extends TResolveData = TResolveData> {
+    private static _Queue;
     private queue;
-    constructor();
+    http: Http<DATA>;
+    constructor(http: Http<DATA>);
     has(request: string): boolean;
-    get(request: string): Http | undefined;
+    get(request: string): Http<TResolveData> | undefined;
     clear(request: string): void;
-    push(request: string, instance: Http): boolean;
-    static has: (request: string) => boolean;
-    static get: (request: string) => Http | undefined;
-    static clear: (request: string) => void;
-    static push: (request: string, instance: Http) => boolean;
+    push(request: string): boolean;
 }
 export default Queue;

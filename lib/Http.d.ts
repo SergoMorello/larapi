@@ -1,16 +1,18 @@
 import Core from "./Core";
+import Queue from './Queue';
 import { Event, Events } from "easy-event-emitter";
-import type { TMethod, TParams, TData, TRequestParams, TListenerEvents, TRequestProgress } from "./types";
-declare class Http extends Core {
+import type { TMethod, TParams, TData, TRequestParams, TListenerEvents, TRequestProgress, TResolveData } from "./types";
+declare class Http<DATA extends TResolveData = TResolveData> extends Core {
     private cacheIndex;
     currentCache?: TData;
     currentEvents: Events;
     requestParams: TRequestParams;
     method: TMethod;
-    params: TParams;
+    params: TParams<DATA>;
     path: string;
+    queue: Queue<DATA>;
     queueName: string;
-    constructor(method: TMethod, params: TParams, context?: Core);
+    constructor(method: TMethod, params: TParams<DATA>, context?: Core);
     private initRequest;
     private initCache;
     private initQueue;
