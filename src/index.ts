@@ -14,7 +14,7 @@ import Http from "./Http";
 
 
 /** Laravel API Client */
-class API<D extends TResponseData = TResponseData, U extends TUser = TUser> extends Core {
+class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S extends D['success'] = D['success']> extends Core {
 	private static instance = new API({
 		host: ''
 	});
@@ -46,47 +46,47 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser> exte
 		this.addListener = this.addListener.bind(this);
 	}
 
-	public http(method: TMethod, params: TParams<D>) {
-		const http = new Http<D>(method, params, this);
+	public http<PATH extends keyof S, DATA extends S[PATH]>(method: TMethod, params: TParams<PATH, DATA>) {
+		const http = new Http<D, PATH, DATA>(method, params, this);
 		if (this.token) {
 			http.addHeader('Authorization', 'Bearer ' + this.token);
 		}
 		return http;
 	}
 
-	public get(params: TParams<D>) {
+	public get<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA, 'GET'>) {
 		return this.http('GET', params).request();
 	}
 
-	public head(params: TParams<D>) {
+	public head<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>) {
 		return this.http('HEAD', params).request();
 	}
 
-	public post(params: TParams<D>) {
+	public post<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>) {
 		return this.http('POST', params).request();
 	}
 
-	public put(params: TParams<D>) {
+	public put<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>) {
 		return this.http('PUT', params).request();
 	}
 
-	public patch(params: TParams<D>) {
+	public patch<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>) {
 		return this.http('PATCH', params).request();
 	}
 
-	public delete(params: TParams<D>) {
+	public delete<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>) {
 		return this.http('DELETE', params).request();
 	}
 
-	public options(params: TParams<D>) {
+	public options<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>) {
 		return this.http('OPTIONS', params).request();
 	}
 
-	public connect(params: TParams<D>) {
+	public connect<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>) {
 		return this.http('CONNECT', params).request();
 	}
 
-	public trace(params: TParams<D>) {
+	public trace<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>) {
 		return this.http('TRACE', params).request();
 	}
 

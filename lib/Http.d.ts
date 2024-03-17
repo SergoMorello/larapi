@@ -2,17 +2,17 @@ import Core from "./Core";
 import Queue from './Queue';
 import { Event, Events } from "easy-event-emitter";
 import type { TMethod, TParams, TData, TRequestParams, TListenerEvents, TRequestProgress, TResponseData } from "./types";
-declare class Http<D extends TResponseData = TResponseData> extends Core {
+declare class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((...args: any) => any) = any> extends Core {
     private cacheIndex;
     currentCache?: TData;
     currentEvents: Events;
     requestParams: TRequestParams;
     method: TMethod;
-    params: TParams<D>;
+    params: TParams<PATH, DATA>;
     path: string;
     queue: Queue<D>;
     queueName: string;
-    constructor(method: TMethod, params: TParams<D>, context?: Core);
+    constructor(method: TMethod, params: TParams<PATH, DATA>, context?: Core);
     private initRequest;
     private initCache;
     private initQueue;

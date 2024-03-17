@@ -16,18 +16,18 @@ import type {
 	TResponseData
 } from "./types";
 
-class Http<D extends TResponseData = TResponseData> extends Core {
+class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((...args: any) => any) = any> extends Core {
 	private cacheIndex: string;
 		currentCache?: TData;
 		currentEvents: Events
 		requestParams: TRequestParams;
 		method: TMethod;
-		params: TParams<D>;
+		params: TParams<PATH, DATA>;
 		path: string;
 		queue: Queue<D>;
 		queueName: string;
 
-	constructor(method: TMethod, params: TParams<D>, context?: Core) {
+	constructor(method: TMethod, params: TParams<PATH, DATA>, context?: Core) {
 		super(context);
 		this.currentEvents = new EventEmitter();
 		this.queue = new Queue<D>(this);

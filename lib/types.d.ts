@@ -14,7 +14,7 @@ export type TError = {
     message?: string;
 };
 export type TData = {
-    [index: string]: any;
+    [index: string]: any | ((...args: any) => any);
 };
 export type TGroupsData = {
     [index: string]: TData;
@@ -42,17 +42,17 @@ export type TResponseData = {
     error?: TError;
     fail?: TError;
 };
-export type TParams<T extends TResponseData = TResponseData, PATH extends keyof T['success'] = keyof T['success'], DATA extends T['success'][PATH] = T['success'][PATH]> = {
-    path: PATH;
-    data?: TData;
+export type TParams<P = string | keyof TResponseData['success'], D extends ((...args: any) => any) = TResponseData['success']['?'] | ((...args: any) => any), M extends TMethod = TMethod, E extends TError = TError, F extends TError = TError> = {
+    path: P;
+    data?: Parameters<D>[0];
     cache?: string | boolean;
     cacheUpdate?: TCacheControll | TCacheControll[];
     cacheClear?: TCacheControll | TCacheControll[];
     globalName?: string;
     queueThrottling?: boolean;
-    success?: (data: DATA) => void;
-    error?: (error: T['error']) => void;
-    fail?: (fail: T['fail']) => void;
+    success?: (data: ReturnType<D>) => void;
+    error?: (error: E) => void;
+    fail?: (fail: F) => void;
     complete?: (complete: any) => void;
     progress?: (progress: TRequestProgress) => void;
 };

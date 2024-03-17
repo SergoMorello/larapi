@@ -6,7 +6,7 @@ declare class Queue<D extends TResponseData = TResponseData> {
     http: Http<D>;
     constructor(http: Http<D>);
     has(request: string): boolean;
-    get(request: string): Http<TResponseData> | undefined;
+    get(request: string): Http<TResponseData, any, any> | undefined;
     clear(request: string): void;
     push(request: string): boolean;
 }

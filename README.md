@@ -15,6 +15,43 @@ const api = new API({
 API.setHost('https://my-host');
 ```
 
+#### To use typing - use new instanse
+#### The first argument of the class takes the type of requests, and the second the type of the user
+
+```js
+type TTodo = {
+	id: number;
+	userId: number;
+	title: string;
+	completed: boolean;
+};
+
+type TApiTodos = {
+	success: {
+		'todos': () => TTodo[],
+		[path: `todos/${number}`]: (request: Omit<TTodo, 'id'>) => TTodo;
+	},
+	error: {
+		message: string;
+	}
+};
+
+const api = new API<TApiTodos>({
+	host: 'https://jsonplaceholder.typicode.com/',
+});
+...
+
+api.get({
+	path: 'todos/1',
+	success: (e) => {
+		console.log(e.id);
+	},
+	error: (e) => {
+		console.log(e);
+	}
+});
+```
+
 ### Authorization
 #### token useds in the header Authorization: Bearer
 ```js
