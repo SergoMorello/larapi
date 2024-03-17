@@ -4,8 +4,17 @@ export type TCacheBody = {
 	time: number;
 }
 
+export type TUser = {
+	id: number;
+	[index: string]: any;
+};
+
 export type TCache = {
 	[index: string]: TCacheBody;
+}
+
+export type TError = {
+	message?: string;
 }
 
 export type TData = {
@@ -39,13 +48,13 @@ export type TConfig = {
 	dataReplace?: TConfigDataReplace;
 };
 
-export type TResolveData = {
+export type TResponseData = {
 	success: TData;
-	error?: TData;
-	fail?: TData;
+	error?: TError;
+	fail?: TError;
 };
 
-export type TParams<T extends TResolveData = TResolveData, PATH extends keyof T['success'] = keyof T['success'], DATA extends T['success'][PATH] = T['success'][PATH]> = {
+export type TParams<T extends TResponseData = TResponseData, PATH extends keyof T['success'] = keyof T['success'], DATA extends T['success'][PATH] = T['success'][PATH]> = {
 	path: PATH;
 	data?: TData;
 	cache?: string | boolean;
@@ -54,9 +63,9 @@ export type TParams<T extends TResolveData = TResolveData, PATH extends keyof T[
 	globalName?: string;
 	queueThrottling?: boolean;
 	success?: (data: DATA) => void;
-	error?: (data: T['error']) => void;
-	fail?: (data: T['fail']) => void;
-	complete?: (data: any) => void;
+	error?: (error: T['error']) => void;
+	fail?: (fail: T['fail']) => void;
+	complete?: (complete: any) => void;
 	progress?: (progress: TRequestProgress) => void;
 }
 

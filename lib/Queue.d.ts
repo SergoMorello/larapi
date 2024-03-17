@@ -1,12 +1,12 @@
 import Http from "./Http";
-import type { TResolveData } from "./types";
-declare class Queue<DATA extends TResolveData = TResolveData> {
+import type { TResponseData } from "./types";
+declare class Queue<D extends TResponseData = TResponseData> {
     private static _Queue;
     private queue;
-    http: Http<DATA>;
-    constructor(http: Http<DATA>);
+    http: Http<D>;
+    constructor(http: Http<D>);
     has(request: string): boolean;
-    get(request: string): Http<TResolveData> | undefined;
+    get(request: string): Http<TResponseData> | undefined;
     clear(request: string): void;
     push(request: string): boolean;
 }

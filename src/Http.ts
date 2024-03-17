@@ -13,24 +13,24 @@ import type {
 	TListenerEvents,
 	TCacheControll,
 	TRequestProgress,
-	TResolveData
+	TResponseData
 } from "./types";
 
-class Http<DATA extends TResolveData = TResolveData> extends Core {
+class Http<D extends TResponseData = TResponseData> extends Core {
 	private cacheIndex: string;
 		currentCache?: TData;
 		currentEvents: Events
 		requestParams: TRequestParams;
 		method: TMethod;
-		params: TParams<DATA>;
+		params: TParams<D>;
 		path: string;
-		queue: Queue<DATA>;
+		queue: Queue<D>;
 		queueName: string;
 
-	constructor(method: TMethod, params: TParams<DATA>, context?: Core) {
+	constructor(method: TMethod, params: TParams<D>, context?: Core) {
 		super(context);
 		this.currentEvents = new EventEmitter();
-		this.queue = new Queue<DATA>(this);
+		this.queue = new Queue<D>(this);
 		this.cacheIndex = '';
 		this.queueName = '';
 		this.method = method;

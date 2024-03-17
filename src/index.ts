@@ -1,9 +1,10 @@
 import Core from "./Core";
 import type {
+	TUser,
 	TConfig,
 	TMethod,
 	TParams,
-	TResolveData,
+	TResponseData,
 	TListenerEvents
 } from "./types";
 import type {
@@ -11,23 +12,19 @@ import type {
 } from "easy-event-emitter";
 import Http from "./Http";
 
-type TUser = {
-	id: number;
-	[index: string]: any;
-};
 
 /** Laravel API Client */
-class API<DATA extends TResolveData = TResolveData, USER extends TUser = TUser> extends Core {
+class API<D extends TResponseData = TResponseData, U extends TUser = TUser> extends Core {
 	private static instance = new API({
 		host: ''
 	});
-	private _user: USER;
+	private _user: U;
 		token?: string;
 
 	constructor(config: TConfig) {
 		super();
 		this.setConfig(config);
-		this._user = {} as USER;
+		this._user = {} as U;
 
 		this.setToken = this.setToken.bind(this);
 		this.setUser = this.setUser.bind(this);
@@ -49,47 +46,47 @@ class API<DATA extends TResolveData = TResolveData, USER extends TUser = TUser> 
 		this.addListener = this.addListener.bind(this);
 	}
 
-	public http(method: TMethod, params: TParams<DATA>) {
-		const http = new Http<DATA>(method, params, this);
+	public http(method: TMethod, params: TParams<D>) {
+		const http = new Http<D>(method, params, this);
 		if (this.token) {
 			http.addHeader('Authorization', 'Bearer ' + this.token);
 		}
 		return http;
 	}
 
-	public get(params: TParams<DATA>) {
+	public get(params: TParams<D>) {
 		return this.http('GET', params).request();
 	}
 
-	public head(params: TParams<DATA>) {
+	public head(params: TParams<D>) {
 		return this.http('HEAD', params).request();
 	}
 
-	public post(params: TParams<DATA>) {
+	public post(params: TParams<D>) {
 		return this.http('POST', params).request();
 	}
 
-	public put(params: TParams<DATA>) {
+	public put(params: TParams<D>) {
 		return this.http('PUT', params).request();
 	}
 
-	public patch(params: TParams<DATA>) {
+	public patch(params: TParams<D>) {
 		return this.http('PATCH', params).request();
 	}
 
-	public delete(params: TParams<DATA>) {
+	public delete(params: TParams<D>) {
 		return this.http('DELETE', params).request();
 	}
 
-	public options(params: TParams<DATA>) {
+	public options(params: TParams<D>) {
 		return this.http('OPTIONS', params).request();
 	}
 
-	public connect(params: TParams<DATA>) {
+	public connect(params: TParams<D>) {
 		return this.http('CONNECT', params).request();
 	}
 
-	public trace(params: TParams<DATA>) {
+	public trace(params: TParams<D>) {
 		return this.http('TRACE', params).request();
 	}
 
@@ -109,7 +106,7 @@ class API<DATA extends TResolveData = TResolveData, USER extends TUser = TUser> 
 		return (typeof this._user === 'object' && 'id' in this._user) ? Number(this._user.id) : 0;
 	}
 
-	public getUser(): USER {
+	public getUser(): U {
 		return this._user;
 	}
 
@@ -117,16 +114,16 @@ class API<DATA extends TResolveData = TResolveData, USER extends TUser = TUser> 
 		return this.getUid();
 	}
 
-	public get user(): USER {
+	public get user(): U {
 		return this.getUser();
 	}
 
-	public async setUser(user: USER) {
+	public async setUser(user: U) {
 		this._user = user;
 		this.events.emit('login', user);
 	}
 
-	public updateUser(user: USER) {
+	public updateUser(user: U) {
 		const updatedUser = {...this.user, ...user};
 		this.setUser(updatedUser);
 		this.events.emit('user-update', updatedUser);
@@ -134,7 +131,7 @@ class API<DATA extends TResolveData = TResolveData, USER extends TUser = TUser> 
 
 	public async logout() {
 		const user = this.user;
-		this.setUser({} as USER);
+		this.setUser({} as U);
 		this.setToken('');
 		this.events.emit('logout', user);
 	}
@@ -178,6 +175,7 @@ export type {
 	 * @deprecated The type should not be used
 	 */
 	Event,
-	Event as EventListener
+	Event as EventListener,
+	TResponseData
 };
 export default API;

@@ -1,16 +1,16 @@
 import Http from "./Http";
-import type { TResolveData } from "./types";
+import type { TResponseData } from "./types";
 
 type TQueue = {
 	[index: string]: Http;
 };
 
-class Queue<DATA extends TResolveData = TResolveData> {
+class Queue<D extends TResponseData = TResponseData> {
 	private static _Queue: TQueue = {};
 	private queue = Queue._Queue;
-		http: Http<DATA>;
+		http: Http<D>;
 
-	constructor(http: Http<DATA>) {
+	constructor(http: Http<D>) {
 		this.http = http;
 		this.has = this.has.bind(this);
 		this.get = this.get.bind(this);

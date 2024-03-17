@@ -1,47 +1,43 @@
 import Core from "./Core";
-import type { TConfig, TMethod, TParams, TResolveData, TListenerEvents } from "./types";
+import type { TUser, TConfig, TMethod, TParams, TResponseData, TListenerEvents } from "./types";
 import type { Event } from "easy-event-emitter";
 import Http from "./Http";
-type TUser = {
-    id: number;
-    [index: string]: any;
-};
 /** Laravel API Client */
-declare class API<DATA extends TResolveData = TResolveData, USER extends TUser = TUser> extends Core {
+declare class API<D extends TResponseData = TResponseData, U extends TUser = TUser> extends Core {
     private static instance;
     private _user;
     token?: string;
     constructor(config: TConfig);
-    http(method: TMethod, params: TParams<DATA>): Http<DATA>;
-    get(params: TParams<DATA>): Http<DATA>;
-    head(params: TParams<DATA>): Http<DATA>;
-    post(params: TParams<DATA>): Http<DATA>;
-    put(params: TParams<DATA>): Http<DATA>;
-    patch(params: TParams<DATA>): Http<DATA>;
-    delete(params: TParams<DATA>): Http<DATA>;
-    options(params: TParams<DATA>): Http<DATA>;
-    connect(params: TParams<DATA>): Http<DATA>;
-    trace(params: TParams<DATA>): Http<DATA>;
+    http(method: TMethod, params: TParams<D>): Http<D>;
+    get(params: TParams<D>): Http<D>;
+    head(params: TParams<D>): Http<D>;
+    post(params: TParams<D>): Http<D>;
+    put(params: TParams<D>): Http<D>;
+    patch(params: TParams<D>): Http<D>;
+    delete(params: TParams<D>): Http<D>;
+    options(params: TParams<D>): Http<D>;
+    connect(params: TParams<D>): Http<D>;
+    trace(params: TParams<D>): Http<D>;
     addListener(event: TListenerEvents, callback: (data: any) => void): Event;
     setToken(token: string): Promise<void>;
     getToken(): string | undefined;
     getUid(): number;
-    getUser(): USER;
+    getUser(): U;
     get uid(): number;
-    get user(): USER;
-    setUser(user: USER): Promise<void>;
-    updateUser(user: USER): void;
+    get user(): U;
+    setUser(user: U): Promise<void>;
+    updateUser(user: U): void;
     logout(): Promise<void>;
-    static http: (method: TMethod, params: TParams<TResolveData>) => Http<TResolveData>;
-    static get: (params: TParams<TResolveData>) => Http<TResolveData>;
-    static head: (params: TParams<TResolveData>) => Http<TResolveData>;
-    static post: (params: TParams<TResolveData>) => Http<TResolveData>;
-    static put: (params: TParams<TResolveData>) => Http<TResolveData>;
-    static patch: (params: TParams<TResolveData>) => Http<TResolveData>;
-    static delete: (params: TParams<TResolveData>) => Http<TResolveData>;
-    static options: (params: TParams<TResolveData>) => Http<TResolveData>;
-    static connect: (params: TParams<TResolveData>) => Http<TResolveData>;
-    static trace: (params: TParams<TResolveData>) => Http<TResolveData>;
+    static http: (method: TMethod, params: TParams<TResponseData>) => Http<TResponseData>;
+    static get: (params: TParams<TResponseData>) => Http<TResponseData>;
+    static head: (params: TParams<TResponseData>) => Http<TResponseData>;
+    static post: (params: TParams<TResponseData>) => Http<TResponseData>;
+    static put: (params: TParams<TResponseData>) => Http<TResponseData>;
+    static patch: (params: TParams<TResponseData>) => Http<TResponseData>;
+    static delete: (params: TParams<TResponseData>) => Http<TResponseData>;
+    static options: (params: TParams<TResponseData>) => Http<TResponseData>;
+    static connect: (params: TParams<TResponseData>) => Http<TResponseData>;
+    static trace: (params: TParams<TResponseData>) => Http<TResponseData>;
     static setConfig: (config: TConfig) => void;
     static setHost: (host: string) => void;
     static setUser: (user: TUser) => Promise<void>;
@@ -67,5 +63,5 @@ export type {
 /**
  * @deprecated The type should not be used
  */
-Event, Event as EventListener };
+Event, Event as EventListener, TResponseData };
 export default API;
