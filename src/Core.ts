@@ -6,7 +6,8 @@ import type {
 	TCache,
 	TCacheBody,
 	TData,
-	TGroupsData
+	TGroupsData,
+	TCoreRviverObject
 } from './types';
 
 abstract class Core {
@@ -64,21 +65,47 @@ abstract class Core {
 	}
 
 	protected jsonParse(str: string) {
-		if (typeof this.config.dataReplaceCallback === 'function') {
-			return JSON.parse(str, this.config.dataReplaceCallback);
+		if (typeof this.config.reviver === 'function') {
+			return JSON.parse(str, this.config.reviver);
 		}
 
-		if (this.config.dataReplace) {
-			const replace = this.config.dataReplace;
-			return JSON.parse(str, (key, value) => {
-				if (key === "createdAt" || key === "updatedAt") {
-					return new Date(value);
+		if (this.config.dataReviver) {
+			const replace = this.config.dataReviver;
+			const dataKeys = Object.keys(replace);
+			const ifKeys: TCoreRviverObject = {};
+
+			dataKeys.forEach((key) => {
+				const and = key.split('&');
+				if (and.length > 1) {
+					ifKeys.and = ifKeys.and ?? {};
+					if (key in ifKeys.and) {
+						ifKeys.and[key].push(...and);
+					}else{
+						ifKeys.and[key] = and;
+					}
 				}
-				if (key in replace && typeof replace[key] === 'function') {
+			});
+
+			const data = JSON.parse(str, (key, value) => {
+				if ((key in replace && typeof replace[key] === 'function')) {
 					return replace[key](value);
 				}
 				return value;
 			});
+			
+			if (ifKeys.and && data) {
+				const dataKeys = Object.keys(data);
+
+				if (ifKeys.and) {
+					for (const [key, keys] of Object.entries(ifKeys.and)) {
+						if (keys.length === dataKeys.length && keys.every((key) => dataKeys.includes(key))) {
+							return replace[key](data);
+						}
+					}
+				}
+			}
+
+			return data;
 		}
 		
 		return JSON.parse(str);

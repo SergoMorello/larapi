@@ -29,13 +29,21 @@ export type TRequestProgress = {
     total: number;
     loaded: number;
 };
-export type TConfigDataReplace = {
+export type TCoreRviverObject = {
+    and?: {
+        [index: string]: string[];
+    };
+    or?: {
+        [index: string]: string[];
+    };
+};
+export type TConfigDataReviver = {
     [index: string]: (value: any) => any;
 };
 export type TConfig = {
     host: string;
-    dataReplaceCallback?: (this: any, key: string, value: any) => any;
-    dataReplace?: TConfigDataReplace;
+    reviver?: (this: any, key: string, value: any) => any;
+    dataReviver?: TConfigDataReviver;
 };
 export type TResponseData = {
     success: TData;
