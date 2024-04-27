@@ -239,10 +239,10 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 				}else{
 					if (xhr.status >= 400 && xhr.status <= 499) {
 						this.fail(result);
+					}else{
+						this.error(result);
+						console.warn(result);
 					}
-					
-					this.error(result);
-					console.warn(result);
 				}
 				this.complete(result);
 				this.queue.clear(this.queueName);
