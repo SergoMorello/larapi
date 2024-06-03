@@ -174,8 +174,14 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 	}
 
 	private encodeUrlParams(data: TData) {
-		return Object.keys(data).map(function(k) {
-			return encodeURIComponent(k) + "=" + encodeURIComponent(data[k]);
+		return Object.entries(data).map(([key, value]) => {
+			if (Array.isArray(value)) {
+				return value.map((val) => encodeURIComponent(key) + "[]=" + encodeURIComponent(val)).join('&');
+			}
+			if (typeof value === 'object') {
+				value = JSON.stringify(value);
+			}
+			return encodeURIComponent(key) + "=" + encodeURIComponent(value);
 		}).join('&');
 	}
 
