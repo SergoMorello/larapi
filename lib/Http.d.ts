@@ -1,11 +1,11 @@
 import Core from "./Core";
 import Queue from './Queue';
-import { Event, Events } from "easy-event-emitter";
+import EventEmitter, { EventListener } from "easy-event-emitter";
 import type { TMethod, TParams, TData, TRequestParams, TListenerEvents, TRequestProgress, TResponseData } from "./types";
 declare class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((...args: any) => any) = any> extends Core {
     private cacheIndex;
     currentCache?: TData;
-    currentEvents: Events;
+    currentEvents: EventEmitter;
     requestParams: TRequestParams;
     method: TMethod;
     params: TParams<PATH, DATA>;
@@ -26,7 +26,7 @@ declare class Http<D extends TResponseData = TResponseData, PATH = any, DATA ext
     private cuteUndifinedParams;
     request(): this;
     addHeader(key: string, value: string): this;
-    addListener(event: TListenerEvents, callback: (data: any) => void): Event;
+    addListener<EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, callback: (data: DATA) => void): EventListener;
     deleteHeader(key: string): this;
     updateCache(data: TData, fieldKey?: string | null): void;
     clearCache(data?: TData, fieldKey?: string | null): void;

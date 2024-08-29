@@ -2,8 +2,7 @@ import md5 from 'md5';
 import Core from "./Core";
 import Queue from './Queue';
 import EventEmitter,{
-	Event,
-	Events
+	EventListener
 } from "easy-event-emitter";
 import type {
 	TMethod,
@@ -19,7 +18,7 @@ import type {
 class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((...args: any) => any) = any> extends Core {
 	private cacheIndex: string;
 		currentCache?: TData;
-		currentEvents: Events
+		currentEvents: EventEmitter
 		requestParams: TRequestParams;
 		method: TMethod;
 		params: TParams<PATH, DATA>;
@@ -58,7 +57,8 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 	private initRequest(): void {
 		this.requestParams.headers = {
 			'Accept': 'application/json',
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
+			...this.params.headers
 		};
 
 		this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
@@ -107,7 +107,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		this.queueName = this.params.queueThrottling ? md5(this.path) : this.cacheIndex;
 	}
 
-	private setEmit(event: TListenerEvents, data: any) {
+	private setEmit<EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, data: DATA) {
 		this.currentEvents.emit(event, data);
 		this.events.emit(event, {
 			cacheIndex: this.cacheIndex,
@@ -266,7 +266,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		return this;
 	}
 
-	public addListener(event: TListenerEvents, callback: (data: any) => void): Event {
+	public addListener<EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, callback: (data: DATA) => void): EventListener {
 		return this.currentEvents.addListener(event, callback);
 	}
 

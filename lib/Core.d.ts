@@ -1,9 +1,9 @@
-import { Events } from 'easy-event-emitter';
+import EventEmitter from 'easy-event-emitter';
 import type { TConfig, TCacheBody, TData, TGroupsData } from './types';
 declare abstract class Core {
     private cache;
     initData: TGroupsData;
-    protected readonly events: Events;
+    protected readonly events: EventEmitter;
     config: TConfig;
     constructor(context?: Core);
     protected setConfig(config: TConfig): void;

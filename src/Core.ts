@@ -13,7 +13,7 @@ import type {
 abstract class Core {
 	private cache: TCache;
 		initData: TGroupsData;
-	protected readonly events: Events;
+	protected readonly events: EventEmitter;
 		config: TConfig;
 		
 

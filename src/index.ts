@@ -8,7 +8,7 @@ import type {
 	TListenerEvents
 } from "./types";
 import type {
-	Event
+	EventListener
 } from "easy-event-emitter";
 import Http from "./Http";
 
@@ -19,7 +19,8 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 		host: ''
 	});
 	private _user: U;
-		token?: string;
+	private token?: string;
+	private csrfToken?: string;
 
 	constructor(config: TConfig) {
 		super();
@@ -27,10 +28,13 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 		this._user = {} as U;
 
 		this.setToken = this.setToken.bind(this);
+		this.setCSRFToken = this.setCSRFToken.bind(this);
+		this.setLogin = this.setLogin.bind(this);
 		this.setUser = this.setUser.bind(this);
 		this.updateUser = this.updateUser.bind(this);
 		this.logout = this.logout.bind(this);
 		this.getToken = this.getToken.bind(this);
+		this.getCSRFToken = this.getCSRFToken.bind(this);
 		this.http = this.http.bind(this);
 		this.get = this.get.bind(this);
 		this.head = this.head.bind(this);
@@ -48,9 +52,8 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 
 	public http<PATH extends keyof S, DATA extends S[PATH]>(method: TMethod, params: TParams<PATH, DATA>) {
 		const http = new Http<D, PATH, DATA>(method, params, this);
-		if (this.token) {
-			http.addHeader('Authorization', 'Bearer ' + this.token);
-		}
+		if (this.token) http.addHeader('Authorization', 'Bearer ' + this.token);
+		if (this.csrfToken) http.addHeader('X-CSRF-TOKEN', this.csrfToken);
 		return http;
 	}
 
@@ -90,16 +93,26 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 		return this.http('TRACE', params).request();
 	}
 
-	public addListener(event: TListenerEvents, callback: (data: any) => void): Event {
+	public addListener<EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, callback: (data: DATA) => void): EventListener {
 		return this.events.addListener(event, callback);
 	}
 
-	public async setToken(token: string) {
+	public setToken(token: string) {
 		this.token = token;
+		this.events.emit('token-update', token);
+	}
+
+	public setCSRFToken(csrfToken: string) {
+		this.csrfToken = csrfToken;
+		this.events.emit('csrf-token-update', csrfToken);
 	}
 
 	public getToken() {
 		return this.token;
+	}
+
+	public getCSRFToken() {
+		return this.csrfToken;
 	}
 
 	public getUid(): number {
@@ -118,9 +131,18 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 		return this.getUser();
 	}
 
-	public async setUser(user: U) {
+	public setLogin(user: U, token: string = '') {
+		this.setUser(user);
+		this.setToken(token);
+		this.events.emit('login', {
+			user,
+			token
+		});
+	}
+
+	public setUser(user: U) {
 		this._user = user;
-		this.events.emit('login', user);
+		this.events.emit('user-set', user);
 	}
 
 	public updateUser(user: U) {
@@ -152,8 +174,11 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 	public static updateUser = this.instance.updateUser;
 	public static logout = this.instance.logout;
 	public static setToken = this.instance.setToken;
+	public static setLogin = this.instance.setLogin;
 	public static addListener = this.instance.addListener;
 	public static setInitData = this.instance.setInitData;
+	public static setCSRFToken = this.instance.setCSRFToken;
+	public static getCSRFToken = this.instance.getCSRFToken;
 	public static triggerByCacheGroup = this.instance.triggerByCacheGroup;
 	public static clearCacheGroup = this.instance.clearCacheGroup;
 	public static updateCacheGroup = this.instance.updateCacheGroup;
@@ -171,11 +196,7 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 
 (globalThis as any).apiSetInitData = API.setInitData;
 export type {
-	/**
-	 * @deprecated The type should not be used
-	 */
-	Event,
-	Event as EventListener,
+	EventListener,
 	TResponseData
 };
 export default API;

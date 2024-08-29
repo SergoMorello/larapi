@@ -1,12 +1,13 @@
 import Core from "./Core";
 import type { TUser, TConfig, TMethod, TParams, TResponseData, TListenerEvents } from "./types";
-import type { Event } from "easy-event-emitter";
+import type { EventListener } from "easy-event-emitter";
 import Http from "./Http";
 /** Laravel API Client */
 declare class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S extends D['success'] = D['success']> extends Core {
     private static instance;
     private _user;
-    token?: string;
+    private token?;
+    private csrfToken?;
     constructor(config: TConfig);
     http<PATH extends keyof S, DATA extends S[PATH]>(method: TMethod, params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
     get<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA, 'GET'>): Http<D, PATH, DATA>;
@@ -18,14 +19,17 @@ declare class API<D extends TResponseData = TResponseData, U extends TUser = TUs
     options<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
     connect<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
     trace<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
-    addListener(event: TListenerEvents, callback: (data: any) => void): Event;
-    setToken(token: string): Promise<void>;
+    addListener<EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, callback: (data: DATA) => void): EventListener;
+    setToken(token: string): void;
+    setCSRFToken(csrfToken: string): void;
     getToken(): string | undefined;
+    getCSRFToken(): string | undefined;
     getUid(): number;
     getUser(): U;
     get uid(): number;
     get user(): U;
-    setUser(user: U): Promise<void>;
+    setLogin(user: U, token?: string): void;
+    setUser(user: U): void;
     updateUser(user: U): void;
     logout(): Promise<void>;
     static http: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(method: TMethod, params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
@@ -40,12 +44,15 @@ declare class API<D extends TResponseData = TResponseData, U extends TUser = TUs
     static trace: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
     static setConfig: (config: TConfig) => void;
     static setHost: (host: string) => void;
-    static setUser: (user: TUser) => Promise<void>;
+    static setUser: (user: TUser) => void;
     static updateUser: (user: TUser) => void;
     static logout: () => Promise<void>;
-    static setToken: (token: string) => Promise<void>;
-    static addListener: (event: TListenerEvents, callback: (data: any) => void) => Event;
+    static setToken: (token: string) => void;
+    static setLogin: (user: TUser, token?: string) => void;
+    static addListener: <EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, callback: (data: DATA) => void) => EventListener;
     static setInitData: (data: import("./types").TGroupsData) => void;
+    static setCSRFToken: (csrfToken: string) => void;
+    static getCSRFToken: () => string | undefined;
     static triggerByCacheGroup: (groups: string | string[]) => void;
     static clearCacheGroup: (groups: string | string[], data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
     static updateCacheGroup: (groups: string | string[], data: import("./types").TData, fieldKey?: string | null) => void;
@@ -59,9 +66,5 @@ declare class API<D extends TResponseData = TResponseData, U extends TUser = TUs
      */
     static deleteCacheGroup: (groups: string | string[], data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
 }
-export type { 
-/**
- * @deprecated The type should not be used
- */
-Event, Event as EventListener, TResponseData };
+export type { EventListener, TResponseData };
 export default API;

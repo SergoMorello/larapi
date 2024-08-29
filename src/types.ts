@@ -2,7 +2,7 @@ export type TCacheBody = {
 	data: any;
 	group?: string;
 	time: number;
-}
+};
 
 export type TUser = {
 	id: number;
@@ -11,19 +11,23 @@ export type TUser = {
 
 export type TCache = {
 	[index: string]: TCacheBody;
-}
+};
 
 export type TError = {
 	message?: string;
-}
+};
 
 export type TData = {
 	[index: string]: any | ((...args: any) => any);
-}
+};
 
 export type TGroupsData = {
 	[index: string]: TData;
-}
+};
+
+export type TRequestHeaders = {
+	[index: string]: string;
+};
 
 export type TMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'CONNECT' | 'TRACE';
 
@@ -55,6 +59,7 @@ export type TConfig = {
 	host: string;
 	reviver?: (this: any, key: string, value: any) => any;
 	dataReviver?: TConfigDataReviver;
+	headers?: TRequestHeaders;
 };
 
 export type TResponseData = {
@@ -71,20 +76,46 @@ export type TParams<P = string | keyof TResponseData['success'], D extends ((...
 	cacheClear?: TCacheControll | TCacheControll[];
 	globalName?: string;
 	queueThrottling?: boolean;
+	headers?: TRequestHeaders;
 	success?: (data: ReturnType<D>) => void;
 	error?: (error: E) => void;
 	fail?: (fail: F) => void;
 	complete?: (complete: any) => void;
 	progress?: (progress: TRequestProgress) => void;
-}
+};
 
 export type TRequestParams = {
 	method: TMethod;
-	headers?: {
-		[index: string]: string;
-	};
+	headers?: TRequestHeaders;
 	body?: string;
 	withoutResponse?: boolean;
-}
+};
 
-export type TListenerEvents = 'api-request-success' | 'api-request-fail' | 'api-request-error' | 'api-request-complete' | 'api-request-progress' | 'login' | 'logout' | 'user-update';
+export type TListenerEvents = {
+	'api-request-success': any;
+	'api-request-fail': any;
+	'api-request-error': any;
+	'api-request-complete': any;
+	'api-request-progress': any;
+	'login': {
+		user: any;
+		token: string;
+	};
+	'logout': any;
+	'user-set': any;
+	'user-update': any;
+	'token-update': string;
+	'csrf-token-update': string;
+};
+
+// export type TListenerEvents = 'api-request-success' |
+// 	'api-request-fail' |
+// 	'api-request-error' |
+// 	'api-request-complete' |
+// 	'api-request-progress' |
+// 	'login' |
+// 	'logout' |
+// 	'user-set' |
+// 	'user-update' |
+// 	'token-update' |
+// 	'csrf-token-update';

@@ -42,7 +42,7 @@
     "webpack-cli": "^5.1.4"
   },
   "peerDependencies": {
-    "easy-event-emitter": "^1.0.7",
+    "easy-event-emitter": "^1.1.5",
     "md5": "^2.3.0"
   }
 }
