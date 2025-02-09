@@ -17,14 +17,15 @@ import type {
 
 class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((...args: any) => any) = any> extends Core {
 	private cacheIndex: string;
-		currentCache?: TData;
-		currentEvents: EventEmitter
-		requestParams: TRequestParams;
-		method: TMethod;
-		params: TParams<PATH, DATA>;
-		path: string;
-		queue: Queue<D>;
-		queueName: string;
+	private currentCache?: TData;
+	private currentEvents: EventEmitter
+	private requestParams: TRequestParams;
+	private method: TMethod;
+	private params: TParams<PATH, DATA>;
+	private path: string;
+	private queue: Queue<D>;
+	private queueName: string;
+	private _promise?: Promise<DATA>;
 
 	constructor(method: TMethod, params: TParams<PATH, DATA>, context?: Core) {
 		super(context);
@@ -101,6 +102,10 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		}else{
 			this.deleteCache(this.cacheIndex);
 		}
+	}
+
+	public get promise() {
+		return this._promise;
 	}
 
 	private initQueue(): void {
@@ -200,64 +205,79 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 	public request(): this {
 		if (typeof XMLHttpRequest === 'undefined' || this.currentCache || this.queue.push(this.queueName)) return this;
 		
-		try {
-			const xhr = new XMLHttpRequest();
-			
-			xhr.open(this.method, this.config.host + this.path, true);
-			for(const header in this.requestParams.headers) {
-				xhr.setRequestHeader(header, this.requestParams.headers[header]);
-			}
-
-			if (xhr.upload) {
-				xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
-					if (lengthComputable) {
-						this.progress({
-							percent: (loaded / total * 100),
-							total,
-							loaded
-						});
-					}
-				}
-			}
-
-			xhr.onabort = () => {
-				this.fail({
-					message: 'request abort'
-				});
-			};
-
-			xhr.onerror = () => {
-				this.error({
-					message: 'request error'
-				});
-			};
-
-			xhr.onreadystatechange = () => {
-				if (xhr.readyState !== 4) return;
+		this._promise = new Promise((resolve, reject) => {
+			try {
+				const xhr = new XMLHttpRequest();
 				
-				const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? this.jsonParse(xhr.responseText) : {};
-
-				if (xhr.status >= 200 && xhr.status <= 299) {
-					if (this.params.cache) {
-						this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
-					}
-					this.success(result);
-				}else{
-					if (xhr.status >= 400 && xhr.status <= 499) {
-						this.fail(result);
-					}else{
-						this.error(result);
-						console.warn(result);
+				xhr.open(this.method, this.config.host + this.path, true);
+				for(const header in this.requestParams.headers) {
+					xhr.setRequestHeader(header, this.requestParams.headers[header]);
+				}
+	
+				if (xhr.upload) {
+					xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
+						if (lengthComputable) {
+							this.progress({
+								percent: (loaded / total * 100),
+								total,
+								loaded
+							});
+						}
 					}
 				}
-				this.complete(result);
-				this.queue.clear(this.queueName);
+	
+				xhr.onabort = () => {
+					reject({
+						type: 'abort',
+						message: 'request abort'
+					});
+					this.fail({
+						message: 'request abort'
+					});
+				};
+	
+				xhr.onerror = () => {
+					reject({
+						type: 'error',
+						message: 'request error'
+					});
+					this.error({
+						message: 'request error'
+					});
+				};
+	
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState !== 4) return;
+					
+					const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? this.jsonParse(xhr.responseText) : {};
+	
+					if (xhr.status >= 200 && xhr.status <= 299) {
+						if (this.params.cache) {
+							this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
+						}
+						resolve(result);
+						this.success(result);
+					}else{
+						if (xhr.status >= 400 && xhr.status <= 499) {
+							reject(result);
+							this.fail(result);
+						}else{
+							reject(result);
+							this.error(result);
+							console.warn(result);
+						}
+					}
+					this.complete(result);
+					this.queue.clear(this.queueName);
+				}
+				xhr.send(this.requestParams.body);
+			}catch(e) {
+				reject(e);
+				console.warn(e);
+				throw e;
 			}
-			xhr.send(this.requestParams.body);
-		}catch(e) {
-			console.warn(e);
-			throw e;
-		}
+		});
+		
 		return this
 	}
 

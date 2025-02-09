@@ -1,5 +1,5 @@
 import Core from "./Core";
-import type { TUser, TConfig, TMethod, TParams, TResponseData, TListenerEvents } from "./types";
+import type { TUser, TConfig, TMethod, TParams, TResponseData, TListenerEvents, TData } from "./types";
 import type { EventListener } from "easy-event-emitter";
 import Http from "./Http";
 /** Laravel API Client */
@@ -9,16 +9,16 @@ declare class API<D extends TResponseData = TResponseData, U extends TUser = TUs
     private token?;
     private csrfToken?;
     constructor(config: TConfig);
-    http<PATH extends keyof S, DATA extends S[PATH]>(method: TMethod, params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
-    get<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA, 'GET'>): Http<D, PATH, DATA>;
-    head<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
-    post<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
-    put<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
-    patch<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
-    delete<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
-    options<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
-    connect<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
-    trace<PATH extends keyof S, DATA extends S[PATH]>(params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
+    http<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(method: TMethod, params: TParams<PATH, DATA>): Http<D, PATH, DATA>;
+    get<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA, 'GET'>): Http<D, keyof S, Data>;
+    head<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>): Http<D, keyof S, Data>;
+    post<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>): Http<D, keyof S, Data>;
+    put<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>): Http<D, keyof S, Data>;
+    patch<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>): Http<D, keyof S, Data>;
+    delete<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>): Http<D, keyof S, Data>;
+    options<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>): Http<D, keyof S, Data>;
+    connect<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>): Http<D, keyof S, Data>;
+    trace<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>): Http<D, keyof S, Data>;
     addListener<EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, callback: (data: DATA) => void): EventListener;
     setToken(token: string): void;
     setCSRFToken(csrfToken: string): void;
@@ -32,16 +32,16 @@ declare class API<D extends TResponseData = TResponseData, U extends TUser = TUs
     setUser(user: U): void;
     updateUser(user: U): void;
     logout(): Promise<void>;
-    static http: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(method: TMethod, params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
-    static get: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA, "GET">) => Http<TResponseData, PATH, DATA>;
-    static head: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
-    static post: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
-    static put: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
-    static patch: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
-    static delete: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
-    static options: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
-    static connect: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
-    static trace: <PATH extends string | number, DATA extends import("./types").TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
+    static http: <DATA extends TData[PATH]["?"], PATH extends string | number = string | number>(method: TMethod, params: TParams<PATH, DATA>) => Http<TResponseData, PATH, DATA>;
+    static get: <Data extends TData[PATH]["?"], PATH extends string | number = string | number, DATA extends TData[PATH] = TData[PATH]>(params: TParams<PATH, DATA, "GET">) => Http<TResponseData, string | number, Data>;
+    static head: <Data extends TData[PATH]["?"], PATH extends string | number = string | number, DATA extends TData[PATH] = TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, string | number, Data>;
+    static post: <Data extends TData[PATH]["?"], PATH extends string | number = string | number, DATA extends TData[PATH] = TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, string | number, Data>;
+    static put: <Data extends TData[PATH]["?"], PATH extends string | number = string | number, DATA extends TData[PATH] = TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, string | number, Data>;
+    static patch: <Data extends TData[PATH]["?"], PATH extends string | number = string | number, DATA extends TData[PATH] = TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, string | number, Data>;
+    static delete: <Data extends TData[PATH]["?"], PATH extends string | number = string | number, DATA extends TData[PATH] = TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, string | number, Data>;
+    static options: <Data extends TData[PATH]["?"], PATH extends string | number = string | number, DATA extends TData[PATH] = TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, string | number, Data>;
+    static connect: <Data extends TData[PATH]["?"], PATH extends string | number = string | number, DATA extends TData[PATH] = TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, string | number, Data>;
+    static trace: <Data extends TData[PATH]["?"], PATH extends string | number = string | number, DATA extends TData[PATH] = TData[PATH]>(params: TParams<PATH, DATA>) => Http<TResponseData, string | number, Data>;
     static setConfig: (config: TConfig) => void;
     static setHost: (host: string) => void;
     static setUser: (user: TUser) => void;
@@ -54,8 +54,8 @@ declare class API<D extends TResponseData = TResponseData, U extends TUser = TUs
     static setCSRFToken: (csrfToken: string) => void;
     static getCSRFToken: () => string | undefined;
     static triggerByCacheGroup: (groups: string | string[]) => void;
-    static clearCacheGroup: (groups: string | string[], data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
-    static updateCacheGroup: (groups: string | string[], data: import("./types").TData, fieldKey?: string | null) => void;
+    static clearCacheGroup: (groups: string | string[], data?: TData | undefined, fieldKey?: string | null) => void;
+    static updateCacheGroup: (groups: string | string[], data: TData, fieldKey?: string | null) => void;
     static getToken: () => string | undefined;
     static getUid: () => number;
     static getUser: () => TUser;
@@ -64,7 +64,7 @@ declare class API<D extends TResponseData = TResponseData, U extends TUser = TUs
     /**
      * @deprecated The method should not be used
      */
-    static deleteCacheGroup: (groups: string | string[], data?: import("./types").TData | undefined, fieldKey?: string | null) => void;
+    static deleteCacheGroup: (groups: string | string[], data?: TData | undefined, fieldKey?: string | null) => void;
 }
 export type { EventListener, TResponseData };
 export default API;
