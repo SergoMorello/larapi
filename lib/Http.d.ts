@@ -25,7 +25,7 @@ declare class Http<D extends TResponseData = TResponseData, PATH = any, DATA ext
     progress(progress: TRequestProgress): void;
     private encodeUrlParams;
     private cuteUndifinedParams;
-    request(): this;
+    request(force?: boolean): this;
     addHeader(key: string, value: string): this;
     addListener<EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, callback: (data: DATA) => void): EventListener;
     deleteHeader(key: string): this;

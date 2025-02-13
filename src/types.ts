@@ -25,9 +25,7 @@ export type TGroupsData = {
 	[index: string]: TData;
 };
 
-export type TRequestHeaders = {
-	[index: string]: string;
-};
+export type TRequestHeaders = Record<string, string>;
 
 export type TMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'CONNECT' | 'TRACE';
 
@@ -71,6 +69,9 @@ export type TResponseData = {
 export type TParams<P = string | keyof TResponseData['success'], D extends ((...args: any) => any) = TResponseData['success']['?'] | ((...args: any) => any),  M extends TMethod = TMethod, E extends TError = TError, F extends TError = TError> = {
 	path: P;
 	data?: Parameters<D>[0];
+	file?: ArrayBuffer;
+	fileSizeChunk?: number;
+	body?: XMLHttpRequestBodyInit;
 	cache?: string | boolean;
 	cacheUpdate?: TCacheControll | TCacheControll[];
 	cacheClear?: TCacheControll | TCacheControll[];
@@ -87,7 +88,7 @@ export type TParams<P = string | keyof TResponseData['success'], D extends ((...
 export type TRequestParams = {
 	method: TMethod;
 	headers?: TRequestHeaders;
-	body?: string;
+	body?: XMLHttpRequestBodyInit;
 	withoutResponse?: boolean;
 };
 

@@ -12,7 +12,8 @@ import type {
 	TListenerEvents,
 	TCacheControll,
 	TRequestProgress,
-	TResponseData
+	TResponseData,
+	TRequestHeaders
 } from "./types";
 
 class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((...args: any) => any) = any> extends Core {
@@ -39,6 +40,10 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		this.requestParams = {
 			method: this.method
 		};
+
+		this.requestParams.headers = {
+			...this.params.headers
+		};
 		
 		this.success = this.success.bind(this);
 		this.fail = this.fail.bind(this);
@@ -56,12 +61,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 	}
 
 	private initRequest(): void {
-		this.requestParams.headers = {
-			'Accept': 'application/json',
-			'Content-Type': 'application/json',
-			...this.params.headers
-		};
-
+		
 		this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
 
 		if ((['GET', 'HEAD'] as TMethod[]).includes(this.method)) {
@@ -74,7 +74,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		}
 
 		if ((['POST', 'PUT', 'CONNECT', 'PATH'] as TMethod[]).includes(this.method)) {
-			this.requestParams.body = JSON.stringify(this.params.data);
+			this.requestParams.body = this.params.body ?? JSON.stringify(this.params.data);
 		}
 
 		if ((['PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE'] as TMethod[]).includes(this.method)) {
@@ -202,11 +202,53 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		return data;
 	}
 
-	public request(): this {
-		if (typeof XMLHttpRequest === 'undefined' || this.currentCache || this.queue.push(this.queueName)) return this;
-		
-		this._promise = new Promise((resolve, reject) => {
+	public request(force?: boolean): this {
+
+		if (typeof XMLHttpRequest === 'undefined' || (!force && (this.currentCache || this.queue.push(this.queueName)))) return this;
+		this._promise = new Promise(async (resolve, reject) => {
 			try {
+				if (this.params.file) {
+					const data = this.params.file;
+					const chunkSize = this.params.fileSizeChunk ? this.params.fileSizeChunk * 1024 * 1024 : this.params.file.byteLength;
+					const totalChunks = Math.ceil(this.params.file.byteLength / chunkSize);
+					const fileId = `file-${new Date().getTime()}`;
+
+					for (let i = 0; i < totalChunks; i++) {
+						
+						const start = i * chunkSize;
+						const end = Math.min(start + chunkSize, data.byteLength);
+						const chunk = data.slice(start, end);
+
+						const formData = new FormData();
+						formData.append("file", new Blob([chunk]));
+						formData.append("file_id", fileId);
+						formData.append("chunk_index", String(i));
+						formData.append("total_chunks", String(totalChunks));
+						const headers: TRequestHeaders = {
+							...this.requestParams.headers
+						};
+
+						delete headers['Accept'];
+						delete headers['Content-Type'];
+						
+						await (new Http(this.method, {
+							...this.params,
+							file: undefined,
+							headers,
+							data: undefined,
+							fileSizeChunk: undefined,
+							body: formData,
+							success: (totalChunks - 1 > i) ? undefined : (data) => {
+								resolve(data);
+								this.success(data);
+							},
+							fail: reject,
+							error: reject
+						}, this)).request(true).promise;
+					}
+					return;
+				}
+
 				const xhr = new XMLHttpRequest();
 				
 				xhr.open(this.method, this.config.host + this.path, true);
@@ -264,7 +306,6 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 						}else{
 							reject(result);
 							this.error(result);
-							console.warn(result);
 						}
 					}
 					this.complete(result);
@@ -273,7 +314,6 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 				xhr.send(this.requestParams.body);
 			}catch(e) {
 				reject(e);
-				console.warn(e);
 				throw e;
 			}
 		});
