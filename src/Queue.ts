@@ -37,10 +37,11 @@ class Queue<D extends TResponseData = TResponseData> {
 		if (!refInstance) {
 			(this.queue[request] as any) = this.http;
 		}else{
-			refInstance?.addListener('api-request-success', this.http.success);
-			refInstance?.addListener('api-request-error', this.http.error);
-			refInstance?.addListener('api-request-fail', this.http.fail);
-			refInstance?.addListener('api-request-complete', this.http.complete);
+			refInstance?.addListener('api-request-success', this.http.handleSuccess);
+			refInstance?.addListener('api-request-error', this.http.handleError);
+			refInstance?.addListener('api-request-fail', this.http.handleFail);
+			refInstance?.addListener('api-request-complete', this.http.handleComplete);
+			refInstance?.addListener('api-request-abort', this.http.handleAbort);
 		}
 		return refInstance instanceof Http;
 	}

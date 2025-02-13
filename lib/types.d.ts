@@ -69,6 +69,7 @@ export type TParams<P = string | keyof TResponseData['success'], D extends ((...
     fail?: (fail: F) => void;
     complete?: (complete: any) => void;
     progress?: (progress: TRequestProgress) => void;
+    abort?: (error: E) => void;
 };
 export type TRequestParams = {
     method: TMethod;
@@ -78,6 +79,7 @@ export type TRequestParams = {
 };
 export type TListenerEvents = {
     'api-request-success': any;
+    'api-request-abort': any;
     'api-request-fail': any;
     'api-request-error': any;
     'api-request-complete': any;

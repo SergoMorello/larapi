@@ -27,6 +27,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 	private queue: Queue<D>;
 	private queueName: string;
 	private _promise?: Promise<DATA>;
+	private xhr?: XMLHttpRequest;
 
 	constructor(method: TMethod, params: TParams<PATH, DATA>, context?: Core) {
 		super(context);
@@ -45,11 +46,12 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 			...this.params.headers
 		};
 		
-		this.success = this.success.bind(this);
-		this.fail = this.fail.bind(this);
-		this.error = this.error.bind(this);
-		this.complete = this.complete.bind(this);
-		this.progress = this.progress.bind(this);
+		this.handleSuccess = this.handleSuccess.bind(this);
+		this.handleAbort = this.handleAbort.bind(this);
+		this.handleFail = this.handleFail.bind(this);
+		this.handleError = this.handleError.bind(this);
+		this.handleComplete = this.handleComplete.bind(this);
+		this.handleProgress = this.handleProgress.bind(this);
 		this.setEmit = this.setEmit.bind(this);
 		this.request = this.request.bind(this);
 		this.addHeader = this.addHeader.bind(this);
@@ -62,6 +64,10 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 
 	private initRequest(): void {
 		
+		if (typeof XMLHttpRequest !== 'undefined') {
+			this.xhr = new XMLHttpRequest();
+		}
+
 		this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
 
 		if ((['GET', 'HEAD'] as TMethod[]).includes(this.method)) {
@@ -96,8 +102,8 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 				this.events.addListener('trigger-request-by-cache-' + this.params.cache, this.request);
 			}
 			if (this.currentCache = this.getCache(this.cacheIndex)) {
-				this.success(this.currentCache);
-				this.complete(this.currentCache);
+				this.handleSuccess(this.currentCache);
+				this.handleComplete(this.currentCache);
 			}	
 		}else{
 			this.deleteCache(this.cacheIndex);
@@ -121,7 +127,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 	}
 
 	//Заголовки от 200 до 299
-	public success(data: any) {
+	public handleSuccess(data: any) {
 		if (typeof this.params.success === 'function')
 			this.params.success(data);
 		if (this.params.cacheUpdate && this.params.data) {
@@ -144,8 +150,16 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		this.setEmit('api-request-success', data);
 	}
 
+	public handleAbort(data: any) {
+		if (typeof this.params.abort === 'function') {
+			this.params.abort(data);
+		}
+		
+		this.setEmit('api-request-abort', data);
+	}
+
 	//Заголовки от 400 до 499
-	public fail(data: any) {
+	public handleFail(data: any) {
 		if (typeof this.params.fail === 'function') {
 			this.params.fail(data);
 		}
@@ -154,7 +168,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 	}
 
 	//Все остальные
-	public error(data: any) {
+	public handleError(data: any) {
 		if (typeof this.params.error === 'function') {
 			this.params.error(data);
 		}
@@ -162,7 +176,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		this.setEmit('api-request-error', data);
 	}
 
-	public complete(data: any) {
+	public handleComplete(data: any) {
 		if (typeof this.params.complete === 'function') {
 			this.params.complete(data);
 		}	
@@ -170,7 +184,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		this.setEmit('api-request-complete', data);
 	}
 
-	public progress(progress: TRequestProgress) {
+	public handleProgress(progress: TRequestProgress) {
 		if (typeof this.params.progress === 'function') {
 			this.params.progress(progress);
 		}	
@@ -204,8 +218,9 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 
 	public request(force?: boolean): this {
 
-		if (typeof XMLHttpRequest === 'undefined' || (!force && (this.currentCache || this.queue.push(this.queueName)))) return this;
+		if (!force && (this.currentCache || this.queue.push(this.queueName))) return this;
 		this._promise = new Promise(async (resolve, reject) => {
+			if (typeof this.xhr === 'undefined') return;
 			try {
 				if (this.params.file) {
 					const data = this.params.file;
@@ -230,8 +245,8 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 
 						delete headers['Accept'];
 						delete headers['Content-Type'];
-						
-						await (new Http(this.method, {
+
+						const http = new Http(this.method, {
 							...this.params,
 							file: undefined,
 							headers,
@@ -240,11 +255,11 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 							body: formData,
 							success: (totalChunks - 1 > i) ? undefined : (data) => {
 								resolve(data);
-								this.success(data);
+								this.handleSuccess(data);
 							},
 							progress: (progres) => {
 								const loaded = data.byteLength + progres.loaded;
-								this.progress({
+								this.handleProgress({
 									percent: (start / data.byteLength * 100),
 									total: data.byteLength,
 									loaded
@@ -252,22 +267,24 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 							},
 							fail: reject,
 							error: reject
-						}, this)).request(true).promise;
+						}, this);
+
+						this.xhr = http.xhr;
+						
+						await http.request(true).promise;
 					}
 					return;
 				}
-
-				const xhr = new XMLHttpRequest();
 				
-				xhr.open(this.method, this.config.host + this.path, true);
+				this.xhr.open(this.method, this.config.host + this.path, true);
 				for(const header in this.requestParams.headers) {
-					xhr.setRequestHeader(header, this.requestParams.headers[header]);
+					this.xhr.setRequestHeader(header, this.requestParams.headers[header]);
 				}
 	
-				if (xhr.upload) {
-					xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
+				if (this.xhr.upload) {
+					this.xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
 						if (lengthComputable) {
-							this.progress({
+							this.handleProgress({
 								percent: (loaded / total * 100),
 								total,
 								loaded
@@ -276,57 +293,60 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 					}
 				}
 	
-				xhr.onabort = () => {
+				this.xhr.onabort = () => {
 					reject({
 						type: 'abort',
 						message: 'request abort'
 					});
-					this.fail({
+					this.handleAbort({
 						message: 'request abort'
 					});
 				};
 	
-				xhr.onerror = () => {
+				this.xhr.onerror = () => {
 					reject({
 						type: 'error',
 						message: 'request error'
 					});
-					this.error({
+					this.handleError({
 						message: 'request error'
 					});
 				};
 	
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState !== 4) return;
-					
-					const result = (!this.requestParams.withoutResponse && this.isJsonString(xhr.responseText)) ? this.jsonParse(xhr.responseText) : {};
+				this.xhr.onreadystatechange = () => {
+					if (this.xhr?.readyState !== XMLHttpRequest.DONE) return;
 	
-					if (xhr.status >= 200 && xhr.status <= 299) {
+					const result = (!this.requestParams.withoutResponse && this.isJsonString(this.xhr.responseText)) ? this.jsonParse(this.xhr.responseText) : {};
+	
+					if (this.xhr?.status >= 200 && this.xhr.status <= 299) {
 						if (this.params.cache) {
 							this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
 						}
 						resolve(result);
-						this.success(result);
+						this.handleSuccess(result);
 					}else{
-						if (xhr.status >= 400 && xhr.status <= 499) {
+						if (this.xhr.status >= 400 && this.xhr.status <= 499) {
 							reject(result);
-							this.fail(result);
+							this.handleFail(result);
 						}else{
 							reject(result);
-							this.error(result);
+							this.handleError(result);
 						}
 					}
-					this.complete(result);
+					this.handleComplete(result);
 					this.queue.clear(this.queueName);
 				}
-				xhr.send(this.requestParams.body);
+				this.xhr.send(this.requestParams.body);
 			}catch(e) {
 				reject(e);
-				throw e;
 			}
 		});
 		
 		return this
+	}
+
+	public abort() {
+		this.xhr?.abort();
 	}
 
 	public addHeader(key: string, value: string): this {
