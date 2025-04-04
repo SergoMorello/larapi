@@ -226,9 +226,9 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 					headers: this.requestParams.headers,
 					body: this.requestParams.body,
 				}).then((response) => {
-					const data = response.json();
 					this.handleSuccess(response);
-					resolve(data)
+					//@ts-expect-error Skip
+					resolve(response);
 				}).catch((e) => {
 					this.handleFail(e);
 					reject(e)
