@@ -64,7 +64,7 @@ export type TParams<P = string | keyof TResponseData['success'], D extends ((...
     globalName?: string;
     queueThrottling?: boolean;
     headers?: TRequestHeaders;
-    success?: (data: ReturnType<D>) => void;
+    success?: (data: ReturnType<D>, xhr: XMLHttpRequest) => void;
     error?: (error: E) => void;
     fail?: (fail: F) => void;
     complete?: (complete: any) => void;

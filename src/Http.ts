@@ -128,8 +128,8 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 
 	//Заголовки от 200 до 299
 	public handleSuccess(data: any) {
-		if (typeof this.params.success === 'function')
-			this.params.success(data);
+		if (typeof this.params.success === 'function' && this.xhr)
+			this.params.success(data, this.xhr);
 		if (this.params.cacheUpdate && this.params.data) {
 			this.groupFromArray<TCacheControll>(this.params.cacheUpdate, (cacheUpdate, params) => {
 				this.updateCacheGroup(
