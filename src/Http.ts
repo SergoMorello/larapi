@@ -223,7 +223,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 			if (this.params.stream) {
 				fetch(this.config.host + this.path, {
 					method: this.method,
-					headers: this.params.headers,
+					headers: this.requestParams.headers,
 					body: this.requestParams.body,
 				}).then((response) => {
 					const data = response.json();
