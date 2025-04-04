@@ -57,6 +57,7 @@ export type TParams<P = string | keyof TResponseData['success'], D extends ((...
     data?: Parameters<D>[0];
     file?: ArrayBuffer;
     fileSizeChunk?: number;
+    stream?: boolean;
     body?: XMLHttpRequestBodyInit;
     cache?: string | boolean;
     cacheUpdate?: TCacheControll | TCacheControll[];
