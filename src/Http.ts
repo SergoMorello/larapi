@@ -220,6 +220,21 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 
 		if (!force && (this.currentCache || this.queue.push(this.queueName))) return this;
 		this._promise = new Promise(async (resolve, reject) => {
+			if (this.params.stream) {
+				fetch(this.config.host + this.path, {
+					method: this.method,
+					headers: this.params.headers,
+					body: this.requestParams.body,
+				}).then((response) => {
+					const data = response.json();
+					this.handleSuccess(response);
+					resolve(data)
+				}).catch((e) => {
+					this.handleFail(e);
+					reject(e)
+				});
+				return;
+			}
 			if (typeof this.xhr === 'undefined') return;
 			try {
 				if (this.params.file) {
