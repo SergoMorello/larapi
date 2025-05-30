@@ -4,6 +4,10 @@
   "description": "API client for laravel",
   "main": "dist/index.js",
   "types": "lib/index.d.ts",
+  "files": [
+    "dist",
+    "lib"
+  ],
   "scripts": {
     "test": "jest",
     "build": "webpack"
@@ -42,7 +46,7 @@
     "webpack-cli": "^5.1.4"
   },
   "peerDependencies": {
-    "easy-event-emitter": "^1.1.5",
+    "easy-event-emitter": "^1.2.2",
     "md5": "^2.3.0"
   }
 }

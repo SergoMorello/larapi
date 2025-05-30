@@ -68,7 +68,8 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 			this.xhr = new XMLHttpRequest();
 		}
 
-		this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
+		if (this.params.clearUndifinedData)
+			this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
 
 		if ((['GET', 'HEAD'] as TMethod[]).includes(this.method)) {
 			if (this.params.data)
@@ -169,6 +170,9 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 
 	//Все остальные
 	public handleError(data: any) {
+		if (this.xhr?.status === 0 && this.xhr.readyState === 4) {
+			return;
+		}
 		if (typeof this.params.error === 'function') {
 			this.params.error(data);
 		}
@@ -209,7 +213,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 			return;
 		}
 		for(const key in data) {
-			if (!data[key]) {
+			if (typeof data[key] === 'undefined') {
 				delete data[key];
 			}
 		}
@@ -218,7 +222,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 
 	public request(force?: boolean): this {
 
-		if (!force && (this.currentCache || this.queue.push(this.queueName))) return this;
+		if (!force && !this.params.forceRequest && (this.currentCache || this.queue.push(this.queueName))) return this;
 		this._promise = new Promise(async (resolve, reject) => {
 			if (this.params.stream) {
 				fetch(this.config.host + this.path, {
@@ -352,9 +356,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 					this.queue.clear(this.queueName);
 				}
 				this.xhr.send(this.requestParams.body);
-			}catch(e) {
-				reject(e);
-			}
+			}catch(e) {}
 		});
 		
 		return this

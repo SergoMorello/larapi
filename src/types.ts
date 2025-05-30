@@ -76,6 +76,8 @@ export type TParams<P = string | keyof TResponseData['success'], D extends ((...
 	cache?: string | boolean;
 	cacheUpdate?: TCacheControll | TCacheControll[];
 	cacheClear?: TCacheControll | TCacheControll[];
+	clearUndifinedData?: boolean;
+	forceRequest?: boolean;
 	globalName?: string;
 	queueThrottling?: boolean;
 	headers?: TRequestHeaders;
