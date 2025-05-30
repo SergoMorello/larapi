@@ -277,9 +277,9 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 								this.handleSuccess(data);
 							},
 							progress: (progres) => {
-								const loaded = data.byteLength + progres.loaded;
+								const loaded = start + progres.loaded;
 								this.handleProgress({
-									percent: (start / data.byteLength * 100),
+									percent: (loaded / data.byteLength * 100),
 									total: data.byteLength,
 									loaded
 								});
