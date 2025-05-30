@@ -1,6 +1,6 @@
 {
   "name": "larapi",
-  "version": "0.2.29",
+  "version": "0.2.30",
   "description": "API client for laravel",
   "main": "dist/index.js",
   "types": "lib/index.d.ts",
@@ -11,7 +11,7 @@
   "scripts": {
     "test": "jest",
     "build": "webpack",
-	"prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "jest": {
     "transform": {
