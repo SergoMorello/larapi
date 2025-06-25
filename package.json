@@ -32,9 +32,9 @@
   "author": "Sergey Serov",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SergoMorello/larasopp.client/issues"
+    "url": "https://github.com/SergoMorello/larapi/issues"
   },
-  "homepage": "https://github.com/SergoMorello/larasopp.client#readme",
+  "homepage": "https://github.com/SergoMorello/larapi#readme",
   "devDependencies": {
     "@babel/preset-env": "^7.22.9",
     "@babel/preset-typescript": "^7.22.5",
