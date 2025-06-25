@@ -102,10 +102,13 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 			if (typeof this.params.cache === 'string') {
 				this.events.addListener('trigger-request-by-cache-' + this.params.cache, this.request);
 			}
-			if (this.currentCache = this.getCache(this.cacheIndex)) {
-				this.handleSuccess(this.currentCache);
-				this.handleComplete(this.currentCache);
-			}	
+			this._promise = new Promise(async (resolve) => {
+				if (this.currentCache = this.getCache(this.cacheIndex)) {
+					resolve(this.currentCache as DATA);
+					this.handleSuccess(this.currentCache);
+					this.handleComplete(this.currentCache);
+				}
+			});
 		}else{
 			this.deleteCache(this.cacheIndex);
 		}
