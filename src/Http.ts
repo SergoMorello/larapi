@@ -229,6 +229,23 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		return data;
 	}
 
+	private tryHttpRequest() {
+		return new Promise((resolve, reject) => {
+			if (this.params.tryRequest && this.params.tryRequest > this.tryRequestCount) {
+				if (this.tryRequestTimeout) {
+					clearTimeout(this.tryRequestTimeout);
+				}
+				this.tryRequestTimeout = setTimeout(() => {
+					this.httpRequest()
+					.then(resolve)
+					.catch(reject);
+				}, this.params.tryRequestDelay ?? 1000);
+				
+				++this.tryRequestCount;
+			}
+		})
+	}
+
 	private fileRequest() {
 		return new Promise(async (resolve, reject) => {
 			if (!this.params.file) return;
@@ -306,6 +323,11 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 			if (typeof this.xhr === 'undefined') return;
 			try {
 				this.xhr.open(this.method, this.params.host + this.path, true);
+
+				if (this.params.timeout) {
+					this.xhr.timeout = this.params.timeout;
+				}
+
 				for(const header in this.requestParams.headers) {
 					this.xhr.setRequestHeader(header, this.requestParams.headers[header]);
 				}
@@ -332,20 +354,16 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 					});
 				};
 
-				this.xhr.onerror = () => {
-					if (this.params.tryRequest && this.params.tryRequest > this.tryRequestCount) {
-						if (this.tryRequestTimeout) {
-							clearTimeout(this.tryRequestTimeout);
-						}
-						this.tryRequestTimeout = setTimeout(() => {
-							this.httpRequest()
-							.then(resolve)
-							.catch(reject);
-						}, this.params.tryRequestDelay ?? 1000);
-						
-						++this.tryRequestCount;
-						return;
-					}
+				this.xhr.ontimeout = () => {
+					this.tryHttpRequest()
+					.then(resolve)
+					.catch(reject);
+				};
+
+				this.xhr.onerror = async () => {
+					await this.tryHttpRequest()
+						.then(resolve)
+						.catch(reject);
 					reject({
 						type: 'error',
 						message: 'request error'

@@ -61,6 +61,7 @@ export type TConfig = {
 	dataReviver?: TConfigDataReviver;
 	headers?: TRequestHeaders;
 	clearUndifinedData?: boolean;
+	timeout?: number;
 };
 
 export type TResponseData = {
