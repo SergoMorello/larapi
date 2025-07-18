@@ -62,6 +62,8 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		this.request = this.request.bind(this);
 		this.addHeader = this.addHeader.bind(this);
 		this.deleteHeader = this.deleteHeader.bind(this);
+		this.httpRequest = this.httpRequest.bind(this);
+		this.tryHttpRequest = this.tryHttpRequest.bind(this);
 
 		this.initRequest();
 		this.initCache();
@@ -73,7 +75,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		if (typeof XMLHttpRequest !== 'undefined') {
 			this.xhr = new XMLHttpRequest();
 		}
-		this.config
+		
 		if (this.params.clearUndifinedData)
 			this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
 
@@ -236,12 +238,17 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 					clearTimeout(this.tryRequestTimeout);
 				}
 				this.tryRequestTimeout = setTimeout(() => {
+					this.xhr?.abort();
 					this.httpRequest()
-					.then(resolve)
+					.then((value) => {
+						resolve(value);
+						this.tryRequestCount = 0;
+					})
 					.catch(reject);
 				}, this.params.tryRequestDelay ?? 1000);
-				
 				++this.tryRequestCount;
+			}else{
+				reject();
 			}
 		})
 	}
@@ -372,7 +379,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 						message: 'request error'
 					});
 				};
-
+				
 				this.xhr.onreadystatechange = () => {
 					if (this.xhr?.readyState !== XMLHttpRequest.DONE) return;
 
