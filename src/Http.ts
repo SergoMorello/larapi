@@ -376,7 +376,9 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 					this.queue.clear(this.queueName);
 				}
 				this.xhr.send(this.requestParams.body);
-			}catch(e) {}
+			}catch(e) {
+				reject(e);
+			}
 		});
 	}
 	
