@@ -26,17 +26,23 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 	private path: string;
 	private queue: Queue<D>;
 	private queueName: string;
-	private _promise?: Promise<DATA>;
+	private _promise: Promise<DATA>;
 	private xhr?: XMLHttpRequest;
+	private tryRequestCount = 0;
+	private tryRequestTimeout?: NodeJS.Timeout;
 
 	constructor(method: TMethod, params: TParams<PATH, DATA>, context?: Core) {
 		super(context);
 		this.currentEvents = new EventEmitter();
+		this._promise = new Promise<DATA>(() => {});
 		this.queue = new Queue<D>(this);
 		this.cacheIndex = '';
 		this.queueName = '';
 		this.method = method;
-		this.params = params;
+		this.params = {
+			...this.config,
+			...params
+		};
 		this.path = this.params.path as string;
 		this.requestParams = {
 			method: this.method
@@ -67,7 +73,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		if (typeof XMLHttpRequest !== 'undefined') {
 			this.xhr = new XMLHttpRequest();
 		}
-
+		this.config
 		if (this.params.clearUndifinedData)
 			this.params.data = this.params.data ? this.cuteUndifinedParams(this.params.data) : this.params.data;
 
@@ -223,86 +229,87 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		return data;
 	}
 
-	public request(force?: boolean): this {
+	private fileRequest() {
+		return new Promise(async (resolve, reject) => {
+			if (!this.params.file) return;
 
-		if (!force && !this.params.forceRequest && (this.currentCache || this.queue.push(this.queueName))) return this;
-		this._promise = new Promise(async (resolve, reject) => {
-			if (this.params.stream) {
-				fetch(this.config.host + this.path, {
-					method: this.method,
-					headers: this.requestParams.headers,
-					body: this.requestParams.body,
-				}).then((response) => {
-					this.handleSuccess(response);
-					//@ts-expect-error Skip
-					resolve(response);
-				}).catch((e) => {
-					this.handleFail(e);
-					reject(e)
-				});
-				return;
+			const data = this.params.file;
+			const chunkSize = this.params.fileSizeChunk ? this.params.fileSizeChunk * 1024 * 1024 : this.params.file.byteLength;
+			const totalChunks = Math.ceil(this.params.file.byteLength / chunkSize);
+			let fileId: string | undefined = this.params.fileIdByServer ? undefined : `file-${new Date().getTime()}`;
+			
+			for (let i = 0; i < totalChunks; i++) {
+				try {
+					const start = i * chunkSize;
+					const end = Math.min(start + chunkSize, data.byteLength);
+					const chunk = data.slice(start, end);
+
+					const formData = new FormData();
+					formData.append("file", new Blob([chunk]));
+					if (fileId && (!this.params.fileIdByServer || (this.params.fileIdByServer && i > 0))) {
+						formData.append(typeof this.params.fileIdByServer === 'string' ? this.params.fileIdByServer : "file_id", fileId);
+					}
+					formData.append("chunk_index", String(i));
+					formData.append("total_chunks", String(totalChunks));
+
+					if (this.params.data && (totalChunks - 1) === i) {
+						for (const key in this.params.data) {
+							formData.append(key, this.params.data[key]);
+						}
+					}
+					
+					const headers: TRequestHeaders = {
+						...this.requestParams.headers
+					};
+
+					delete headers['Accept'];
+					delete headers['Content-Type'];
+
+					const http = new Http(this.method, {
+						...this.params,
+						file: undefined,
+						headers,
+						data: undefined,
+						fileSizeChunk: undefined,
+						body: formData,
+						success: (totalChunks - 1 > i) ? undefined : (data) => {
+							resolve(data);
+							this.handleSuccess(data);
+						},
+						progress: (progres) => {
+							const loaded = start + progres.loaded;
+							this.handleProgress({
+								percent: (loaded / data.byteLength * 100),
+								total: data.byteLength,
+								loaded
+							});
+						},
+						fail: reject,
+						error: reject
+					}, this);
+
+					this.xhr = http.xhr;
+				
+					const result = await http.request(true).promise;
+					if (result?.file_id) {
+						fileId = result?.file_id;
+					}
+				}catch(e){
+					break;
+				}
 			}
+		})
+	}
+
+	private httpRequest() {
+		return new Promise((resolve, reject) => {
 			if (typeof this.xhr === 'undefined') return;
 			try {
-				if (this.params.file) {
-					const data = this.params.file;
-					const chunkSize = this.params.fileSizeChunk ? this.params.fileSizeChunk * 1024 * 1024 : this.params.file.byteLength;
-					const totalChunks = Math.ceil(this.params.file.byteLength / chunkSize);
-					const fileId = `file-${new Date().getTime()}`;
-
-					for (let i = 0; i < totalChunks; i++) {
-						
-						const start = i * chunkSize;
-						const end = Math.min(start + chunkSize, data.byteLength);
-						const chunk = data.slice(start, end);
-
-						const formData = new FormData();
-						formData.append("file", new Blob([chunk]));
-						formData.append("file_id", fileId);
-						formData.append("chunk_index", String(i));
-						formData.append("total_chunks", String(totalChunks));
-						const headers: TRequestHeaders = {
-							...this.requestParams.headers
-						};
-
-						delete headers['Accept'];
-						delete headers['Content-Type'];
-
-						const http = new Http(this.method, {
-							...this.params,
-							file: undefined,
-							headers,
-							data: undefined,
-							fileSizeChunk: undefined,
-							body: formData,
-							success: (totalChunks - 1 > i) ? undefined : (data) => {
-								resolve(data);
-								this.handleSuccess(data);
-							},
-							progress: (progres) => {
-								const loaded = start + progres.loaded;
-								this.handleProgress({
-									percent: (loaded / data.byteLength * 100),
-									total: data.byteLength,
-									loaded
-								});
-							},
-							fail: reject,
-							error: reject
-						}, this);
-
-						this.xhr = http.xhr;
-						
-						await http.request(true).promise;
-					}
-					return;
-				}
-				
-				this.xhr.open(this.method, this.config.host + this.path, true);
+				this.xhr.open(this.method, this.params.host + this.path, true);
 				for(const header in this.requestParams.headers) {
 					this.xhr.setRequestHeader(header, this.requestParams.headers[header]);
 				}
-	
+
 				if (this.xhr.upload) {
 					this.xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
 						if (lengthComputable) {
@@ -314,7 +321,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 						}
 					}
 				}
-	
+
 				this.xhr.onabort = () => {
 					reject({
 						type: 'abort',
@@ -324,8 +331,21 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 						message: 'request abort'
 					});
 				};
-	
+
 				this.xhr.onerror = () => {
+					if (this.params.tryRequest && this.params.tryRequest > this.tryRequestCount) {
+						if (this.tryRequestTimeout) {
+							clearTimeout(this.tryRequestTimeout);
+						}
+						this.tryRequestTimeout = setTimeout(() => {
+							this.httpRequest()
+							.then(resolve)
+							.catch(reject);
+						}, this.params.tryRequestDelay ?? 1000);
+						
+						++this.tryRequestCount;
+						return;
+					}
 					reject({
 						type: 'error',
 						message: 'request error'
@@ -334,12 +354,12 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 						message: 'request error'
 					});
 				};
-	
+
 				this.xhr.onreadystatechange = () => {
 					if (this.xhr?.readyState !== XMLHttpRequest.DONE) return;
-	
+
 					const result = (!this.requestParams.withoutResponse && this.isJsonString(this.xhr.responseText)) ? this.jsonParse(this.xhr.responseText) : {};
-	
+
 					if (this.xhr?.status >= 200 && this.xhr.status <= 299) {
 						if (this.params.cache) {
 							this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
@@ -347,12 +367,9 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 						resolve(result);
 						this.handleSuccess(result);
 					}else{
-						if (this.xhr.status >= 400 && this.xhr.status <= 499) {
+						if (this.xhr.status >= 100 && this.xhr.status <= 500) {
 							reject(result);
 							this.handleFail(result);
-						}else{
-							reject(result);
-							this.handleError(result);
 						}
 					}
 					this.handleComplete(result);
@@ -360,6 +377,42 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 				}
 				this.xhr.send(this.requestParams.body);
 			}catch(e) {}
+		});
+	}
+	
+	private streamRequest() {
+		return new Promise((resolve, reject) => {
+			fetch(this.params.host + this.path, {
+				method: this.method,
+				headers: this.requestParams.headers,
+				body: this.requestParams.body,
+			}).then((response) => {
+				this.handleSuccess(response);
+				resolve(response);
+			}).catch((e) => {
+				this.handleFail(e);
+				reject(e)
+			});
+		});
+	}
+
+	public request(force?: boolean): this {
+
+		if (!force && !this.params.forceRequest && (this.currentCache || this.queue.push(this.queueName))) return this;
+		this._promise = new Promise(async (resolve, reject) => {
+			try {
+				let result;
+				if (this.params.stream) {
+					result = await this.streamRequest() as DATA;
+				}else if (this.params.file) {
+					result = await this.fileRequest() as DATA;
+				}else{
+					result = await this.httpRequest() as DATA;
+				}
+				resolve(result);
+			}catch(e) {
+				reject(e);
+			}
 		});
 		
 		return this

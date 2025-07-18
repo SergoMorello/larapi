@@ -56,8 +56,11 @@ export type TConfigDataReviver = {
 export type TConfig = {
 	host: string;
 	reviver?: (this: any, key: string, value: any) => any;
+	tryRequest?: number;
+	tryRequestDelay?: number;
 	dataReviver?: TConfigDataReviver;
 	headers?: TRequestHeaders;
+	clearUndifinedData?: boolean;
 };
 
 export type TResponseData = {
@@ -66,21 +69,43 @@ export type TResponseData = {
 	fail?: TError;
 };
 
-export type TParams<P = string | keyof TResponseData['success'], D extends ((...args: any) => any) = TResponseData['success']['?'] | ((...args: any) => any),  M extends TMethod = TMethod, E extends TError = TError, F extends TError = TError> = {
+export type TParams<
+	P = string | keyof TResponseData['success'],
+	D extends ((...args: any) => any) = TResponseData['success']['?'] | ((...args: any) => any),
+	M extends TMethod = TMethod,
+	E extends TError = TError,
+	F extends TError = TError> = Partial<TConfig> &
+{
 	path: P;
 	data?: Parameters<D>[0];
+	/**
+	 * FileReader file object.
+	 * If present, the file will be sent in chunks.
+	*/
 	file?: ArrayBuffer;
+	/**
+	 * When uploading a file, get the ID from the server.
+	 * You can pass `true` — then the variable will be named `file_id`,
+	 * or pass a string like `id_file`, `filename`, etc.
+	 */
+	fileIdByServer?: boolean | string;
 	fileSizeChunk?: number;
+	/**
+	 * Receive data as a stream.
+	 * On success, the response will contain the object `body?.getReader()`.
+	 */
 	stream?: boolean;
 	body?: XMLHttpRequestBodyInit;
+	/**
+	 * Enable data caching.
+	 * You can pass `true`, or a string key to work with the cache later.
+	 */
 	cache?: string | boolean;
 	cacheUpdate?: TCacheControll | TCacheControll[];
 	cacheClear?: TCacheControll | TCacheControll[];
-	clearUndifinedData?: boolean;
 	forceRequest?: boolean;
 	globalName?: string;
 	queueThrottling?: boolean;
-	headers?: TRequestHeaders;
 	success?: (data: ReturnType<D>, xhr: XMLHttpRequest) => void;
 	error?: (error: E) => void;
 	fail?: (fail: F) => void;
@@ -113,15 +138,3 @@ export type TListenerEvents = {
 	'token-update': string;
 	'csrf-token-update': string;
 };
-
-// export type TListenerEvents = 'api-request-success' |
-// 	'api-request-fail' |
-// 	'api-request-error' |
-// 	'api-request-complete' |
-// 	'api-request-progress' |
-// 	'login' |
-// 	'logout' |
-// 	'user-set' |
-// 	'user-update' |
-// 	'token-update' |
-// 	'csrf-token-update';
