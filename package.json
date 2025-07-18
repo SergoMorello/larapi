@@ -1,6 +1,6 @@
 {
   "name": "larapi",
-  "version": "0.2.33",
+  "version": "0.2.34",
   "description": "API client for laravel",
   "main": "dist/index.js",
   "types": "lib/index.d.ts",
