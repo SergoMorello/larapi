@@ -17,9 +17,7 @@ export type TError = {
 	message?: string;
 };
 
-export type TData = {
-	[index: string]: any | ((...args: any) => any);
-};
+export type TData = Record<string, any>;
 
 export type TGroupsData = {
 	[index: string]: TData;
@@ -70,15 +68,18 @@ export type TResponseData = {
 	fail?: TError;
 };
 
+export type TInferRequest<D> = D extends (...args: infer A) => any ? (A extends [infer R, ...any[]] ? R : any) : any;
+export type TInferResponse<D> = D extends (...args: any[]) => infer R ? R : D;
+
 export type TParams<
 	P = string | keyof TResponseData['success'],
-	D extends ((...args: any) => any) = TResponseData['success']['?'] | ((...args: any) => any),
+	D = TResponseData['success']['?'],
 	M extends TMethod = TMethod,
 	E extends TError = TError,
 	F extends TError = TError> = Partial<TConfig> &
 {
 	path: P;
-	data?: Parameters<D>[0];
+	data?: TInferRequest<D>;
 	/**
 	 * FileReader file object.
 	 * If present, the file will be sent in chunks.
@@ -107,7 +108,7 @@ export type TParams<
 	forceRequest?: boolean;
 	globalName?: string;
 	queueThrottling?: boolean;
-	success?: (data: ReturnType<D>, xhr: XMLHttpRequest) => void;
+	success?: (data: TInferResponse<D>, xhr: XMLHttpRequest) => void;
 	error?: (error: E) => void;
 	fail?: (fail: F) => void;
 	complete?: (complete: any) => void;

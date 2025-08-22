@@ -16,7 +16,7 @@ import type {
 	TRequestHeaders
 } from "./types";
 
-class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((...args: any) => any) = any> extends Core {
+class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> extends Core {
 	private cacheIndex: string;
 	private currentCache?: TData;
 	private currentEvents: EventEmitter
@@ -219,9 +219,9 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 		}).join('&');
 	}
 
-	private cuteUndifinedParams(data: TData) {
-		if (typeof data !== 'object') {
-			return;
+	private cuteUndifinedParams<T extends TData>(data: T): T {
+		if (typeof data !== 'object' || data === null) {
+			return data;
 		}
 		for(const key in data) {
 			if (typeof data[key] === 'undefined') {
@@ -267,7 +267,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 					const start = i * chunkSize;
 					const end = Math.min(start + chunkSize, data.byteLength);
 					const chunk = data.slice(start, end);
-
+					
 					const formData = new FormData();
 					formData.append("file", new Blob([chunk]));
 					if (fileId && (!this.params.fileIdByServer || (this.params.fileIdByServer && i > 0))) {
@@ -275,7 +275,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 					}
 					formData.append("chunk_index", String(i));
 					formData.append("total_chunks", String(totalChunks));
-
+					
 					if (this.params.data && (totalChunks - 1) === i) {
 						for (const key in this.params.data) {
 							formData.append(key, this.params.data[key]);
@@ -285,10 +285,10 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 					const headers: TRequestHeaders = {
 						...this.requestParams.headers
 					};
-
+					
 					delete headers['Accept'];
 					delete headers['Content-Type'];
-
+					
 					const http = new Http(this.method, {
 						...this.params,
 						file: undefined,
@@ -311,7 +311,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 						fail: reject,
 						error: reject
 					}, this);
-
+					
 					this.xhr = http.xhr;
 				
 					const result = await http.request(true).promise;
@@ -330,15 +330,15 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 			if (typeof this.xhr === 'undefined') return;
 			try {
 				this.xhr.open(this.method, this.params.host + this.path, true);
-
+				
 				if (this.params.timeout) {
 					this.xhr.timeout = this.params.timeout;
 				}
-
+				
 				for(const header in this.requestParams.headers) {
 					this.xhr.setRequestHeader(header, this.requestParams.headers[header]);
 				}
-
+				
 				if (this.xhr.upload) {
 					this.xhr.upload.onprogress = ({lengthComputable, loaded, total}) => {
 						if (lengthComputable) {
@@ -350,7 +350,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 						}
 					}
 				}
-
+				
 				this.xhr.onabort = () => {
 					reject({
 						type: 'abort',
@@ -360,13 +360,13 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 						message: 'request abort'
 					});
 				};
-
+				
 				this.xhr.ontimeout = () => {
 					this.tryHttpRequest()
 					.then(resolve)
 					.catch(reject);
 				};
-
+				
 				this.xhr.onerror = async () => {
 					await this.tryHttpRequest()
 						.then(resolve)
@@ -382,9 +382,9 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 				
 				this.xhr.onreadystatechange = () => {
 					if (this.xhr?.readyState !== XMLHttpRequest.DONE) return;
-
+					
 					const result = (!this.requestParams.withoutResponse && this.isJsonString(this.xhr.responseText)) ? this.jsonParse(this.xhr.responseText) : {};
-
+					
 					if (this.xhr?.status >= 200 && this.xhr.status <= 299) {
 						if (this.params.cache) {
 							this.setCache(this.cacheIndex, result, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
@@ -424,7 +424,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA extends ((.
 	}
 
 	public request(force?: boolean): this {
-
+		
 		if (!force && !this.params.forceRequest && (this.currentCache || this.queue.push(this.queueName))) return this;
 		this._promise = new Promise(async (resolve, reject) => {
 			try {

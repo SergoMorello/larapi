@@ -60,40 +60,40 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 		return http;
 	}
 
-	public get<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA, 'GET'>) {
-		return this.http<Data>('GET', params).request();
+	public get<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(params: TParams<PATH, DATA, 'GET'>) {
+		return this.http<DATA, PATH>('GET', params).request();
 	}
 
-	public head<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>) {
-		return this.http<Data>('HEAD', params).request();
+	public head<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(params: TParams<PATH, DATA>) {
+		return this.http<DATA, PATH>('HEAD', params).request();
 	}
 
-	public post<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>) {
-		return this.http<Data>('POST', params).request();
+	public post<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(params: TParams<PATH, DATA>) {
+		return this.http<DATA, PATH>('POST', params).request();
 	}
 
-	public put<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>) {
-		return this.http<Data>('PUT', params).request();
+	public put<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(params: TParams<PATH, DATA>) {
+		return this.http<DATA, PATH>('PUT', params).request();
 	}
 
-	public patch<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>) {
-		return this.http<Data>('PATCH', params).request();
+	public patch<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(params: TParams<PATH, DATA>) {
+		return this.http<DATA, PATH>('PATCH', params).request();
 	}
 
-	public delete<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>) {
-		return this.http<Data>('DELETE', params).request();
+	public delete<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(params: TParams<PATH, DATA>) {
+		return this.http<DATA, PATH>('DELETE', params).request();
 	}
 
-	public options<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>) {
-		return this.http<Data>('OPTIONS', params).request();
+	public options<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(params: TParams<PATH, DATA>) {
+		return this.http<DATA, PATH>('OPTIONS', params).request();
 	}
 
-	public connect<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>) {
-		return this.http<Data>('CONNECT', params).request();
+	public connect<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(params: TParams<PATH, DATA>) {
+		return this.http<DATA, PATH>('CONNECT', params).request();
 	}
 
-	public trace<Data extends S[PATH]['?'], PATH extends keyof S = keyof S, DATA extends S[PATH] = S[PATH]>(params: TParams<PATH, DATA>) {
-		return this.http<Data>('TRACE', params).request();
+	public trace<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(params: TParams<PATH, DATA>) {
+		return this.http<DATA, PATH>('TRACE', params).request();
 	}
 
 	public addListener<EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, callback: (data: DATA) => void): EventListener {
