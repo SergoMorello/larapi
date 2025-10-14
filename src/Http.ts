@@ -122,6 +122,10 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 		}
 	}
 
+	public get host() {
+		return this.params.host;
+	}
+
 	public get promise() {
 		return this._promise;
 	}
@@ -268,26 +272,42 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 					const end = Math.min(start + chunkSize, data.byteLength);
 					const chunk = data.slice(start, end);
 					
-					const formData = new FormData();
-					formData.append("file", new Blob([chunk]));
-					if (fileId && (!this.params.fileIdByServer || (this.params.fileIdByServer && i > 0))) {
-						formData.append(typeof this.params.fileIdByServer === 'string' ? this.params.fileIdByServer : "file_id", fileId);
-					}
-					formData.append("chunk_index", String(i));
-					formData.append("total_chunks", String(totalChunks));
-					
-					if (this.params.data && (totalChunks - 1) === i) {
-						for (const key in this.params.data) {
-							formData.append(key, this.params.data[key]);
-						}
-					}
-					
 					const headers: TRequestHeaders = {
 						...this.requestParams.headers
 					};
+
+					let body = undefined;
+					
+					if (this.params.fileType === 'binary') {
+						const u8 = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
+
+						headers['Content-Type'] = 'application/octet-stream';
+						headers['Content-Range'] = `bytes ${start}-${end - 1}/${this.params.file.byteLength}`;
+						headers['X-Chunk-Index'] = String(i);
+						headers['X-Chunk-Total'] = String(totalChunks);
+						if (fileId && (!this.params.fileIdByServer || (this.params.fileIdByServer && i > 0))) {
+							headers[typeof this.params.fileIdByServer === 'string' ? this.params.fileIdByServer : 'X-File-ID'] = fileId;
+						}
+						body = u8;
+					}else{
+						const formData = new FormData();
+						formData.append("file", new Blob([chunk]));
+						if (fileId && (!this.params.fileIdByServer || (this.params.fileIdByServer && i > 0))) {
+							formData.append(typeof this.params.fileIdByServer === 'string' ? this.params.fileIdByServer : "file_id", fileId);
+						}
+						formData.append("chunk_index", String(i));
+						formData.append("total_chunks", String(totalChunks));
+						
+						if (this.params.data && (totalChunks - 1) === i) {
+							for (const key in this.params.data) {
+								formData.append(key, this.params.data[key]);
+							}
+						}
+						delete headers['Content-Type'];
+						body = formData;
+					}
 					
 					delete headers['Accept'];
-					delete headers['Content-Type'];
 					
 					const http = new Http(this.method, {
 						...this.params,
@@ -295,10 +315,13 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 						headers,
 						data: undefined,
 						fileSizeChunk: undefined,
-						body: formData,
+						body,
 						success: (totalChunks - 1 > i) ? undefined : (data) => {
 							resolve(data);
 							this.handleSuccess(data);
+						},
+						complete: (totalChunks - 1 > i) ? undefined : (e) => {
+							this.handleComplete(e);
 						},
 						progress: (progres) => {
 							const loaded = start + progres.loaded;
@@ -319,6 +342,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 						fileId = result?.file_id;
 					}
 				}catch(e){
+					reject(e);
 					break;
 				}
 			}
@@ -329,7 +353,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 		return new Promise((resolve, reject) => {
 			if (typeof this.xhr === 'undefined') return;
 			try {
-				this.xhr.open(this.method, this.params.host + this.path, true);
+				this.xhr.open(this.method, this.params.host + this.path, this.params.requestAsync ?? true);
 				
 				if (this.params.timeout) {
 					this.xhr.timeout = this.params.timeout;

@@ -134,6 +134,10 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 		return this.getUser();
 	}
 
+	public get host() {
+		return this.config.host;
+	}
+
 	public setLogin(user: U, token: string = '') {
 		this.setUser(user);
 		this.setToken(token);

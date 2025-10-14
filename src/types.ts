@@ -92,6 +92,11 @@ export type TParams<
 	 */
 	fileIdByServer?: boolean | string;
 	fileSizeChunk?: number;
+	fileType?: 'binary' | 'multipart';
+	/**
+	 * default true
+	 */
+	requestAsync?: boolean;
 	/**
 	 * Receive data as a stream.
 	 * On success, the response will contain the object `body?.getReader()`.

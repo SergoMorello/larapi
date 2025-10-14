@@ -26,6 +26,7 @@ abstract class Core {
 		this.initData = {};
 
 		this.setConfig = this.setConfig.bind(this);
+		this.getConfig = this.getConfig.bind(this);
 		this.setHost = this.setHost.bind(this);
 		this.setInitData = this.setInitData.bind(this);
 		this.triggerByCacheGroup = this.triggerByCacheGroup.bind(this);
@@ -43,6 +44,10 @@ abstract class Core {
 
 	protected setConfig(config: TConfig) {
 		this.config = config;
+	}
+
+	protected getConfig() {
+		return this.config;
 	}
 
 	protected getCache(key: string): TData | undefined {
