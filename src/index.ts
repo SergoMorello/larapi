@@ -25,6 +25,11 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 
 	constructor(config: TConfig) {
 		super();
+		this.headers = {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json',
+			...config.headers
+		};
 		this.setConfig(config);
 		this._user = {} as U;
 
@@ -53,10 +58,8 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 
 	public http<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(method: TMethod, params: TParams<PATH, DATA>) {
 		const http = new Http<D, PATH, DATA>(method, params, this);
-		http.addHeader('Accept', 'application/json');
-		http.addHeader('Content-Type', 'application/json');
-		if (this.token) http.addHeader('Authorization', 'Bearer ' + this.token);
-		if (this.csrfToken) http.addHeader('X-CSRF-TOKEN', this.csrfToken);
+		if (this.token) http.setHeader('Authorization', `Bearer ${this.token}`);
+		if (this.csrfToken) http.setHeader('X-CSRF-TOKEN', this.csrfToken);
 		return http;
 	}
 

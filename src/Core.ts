@@ -7,20 +7,21 @@ import type {
 	TCacheBody,
 	TData,
 	TGroupsData,
-	TCoreRviverObject
+	TCoreRviverObject,
+	TRequestHeaders
 } from './types';
 
 abstract class Core {
 	private cache: TCache;
 		initData: TGroupsData;
 	protected readonly events: EventEmitter;
-		config: TConfig;
+	protected config: TConfig;
+	protected headers: TRequestHeaders = {};
 		
-
 	constructor(context?: Core) {
 		this.events = new EventEmitter();
 		this.config = {
-			host: 'http://127.0.0.1/'
+			host: 'http://127.0.0.1/',
 		};
 		this.cache = {};
 		this.initData = {};
@@ -37,7 +38,8 @@ abstract class Core {
 				config: context?.config,
 				events: context?.events,
 				cache: context?.cache,
-				initData: context?.initData
+				initData: context?.initData,
+				headers: context.headers
 			});
 		}
 	}
@@ -118,6 +120,30 @@ abstract class Core {
 
 	public setHost(host: string): void {
 		this.config.host = host;
+	}
+
+	public setHeader(name: string, value: string) {
+		this.headers[name] = value;
+		this.events.emit('header-update', {
+			name,
+			value
+		});
+	}
+
+	public getHeader(name: string) {
+		return this.headers[name];
+	}
+
+	public getHeaders() {
+		return Object.entries(this.headers).map(([name, value]) => ({name, value}));
+	}
+
+	public hasHeader(name: string) {
+		return this.headers[name] ? true : false;
+	}
+
+	public deleteHeader(name: string) {
+		delete this.headers[name];
 	}
 
 	protected setCache(key: string, data: TData, group?: string): void {

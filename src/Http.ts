@@ -39,17 +39,19 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 		this.cacheIndex = '';
 		this.queueName = '';
 		this.method = method;
+
+		this.headers = {
+			...this.headers,
+			...params.headers
+		};
 		this.params = {
 			...this.config,
-			...params
+			headers: this.headers,
+			...params,
 		};
 		this.path = this.params.path as string;
 		this.requestParams = {
 			method: this.method
-		};
-
-		this.requestParams.headers = {
-			...this.params.headers
 		};
 		
 		this.handleSuccess = this.handleSuccess.bind(this);
@@ -60,8 +62,6 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 		this.handleProgress = this.handleProgress.bind(this);
 		this.setEmit = this.setEmit.bind(this);
 		this.request = this.request.bind(this);
-		this.addHeader = this.addHeader.bind(this);
-		this.deleteHeader = this.deleteHeader.bind(this);
 		this.httpRequest = this.httpRequest.bind(this);
 		this.tryHttpRequest = this.tryHttpRequest.bind(this);
 
@@ -273,7 +273,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 					const chunk = data.slice(start, end);
 					
 					const headers: TRequestHeaders = {
-						...this.requestParams.headers
+						...this.headers
 					};
 
 					let body = undefined;
@@ -359,8 +359,8 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 					this.xhr.timeout = this.params.timeout;
 				}
 				
-				for(const header in this.requestParams.headers) {
-					this.xhr.setRequestHeader(header, this.requestParams.headers[header]);
+				for(const header in this.headers) {
+					this.xhr.setRequestHeader(header, this.headers[header]);
 				}
 				
 				if (this.xhr.upload) {
@@ -435,7 +435,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 		return new Promise((resolve, reject) => {
 			fetch(this.params.host + this.path, {
 				method: this.method,
-				headers: this.requestParams.headers,
+				headers: this.headers,
 				body: this.requestParams.body,
 			}).then((response) => {
 				this.handleSuccess(response);
@@ -473,20 +473,8 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 		this.xhr?.abort();
 	}
 
-	public addHeader(key: string, value: string): this {
-		this.requestParams.headers = {...this.requestParams.headers, [key]: value};
-		return this;
-	}
-
 	public addListener<EVENT extends keyof TListenerEvents, DATA extends TListenerEvents[EVENT]>(event: EVENT, callback: (data: DATA) => void): EventListener {
 		return this.currentEvents.addListener(event, callback);
-	}
-
-	public deleteHeader(key: string): this {
-		if (this.requestParams.headers && (key in this.requestParams.headers)) {
-			delete this.requestParams.headers[key];
-		}
-		return this;
 	}
 
 	public updateCache(data: TData, fieldKey: string | null = 'id'): void {
