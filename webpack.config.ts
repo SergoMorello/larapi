@@ -28,6 +28,7 @@ const config: Configuration = {
 		path: path.resolve(__dirname, 'dist'),
 		library: 'API',
 		libraryTarget: 'umd',
+		globalObject: 'typeof self !== "undefined" ? self : this',
 		auxiliaryComment: 'API client for laravel'
 	}
 };
