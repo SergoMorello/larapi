@@ -33,6 +33,7 @@ abstract class Core {
 		this.triggerByCacheGroup = this.triggerByCacheGroup.bind(this);
 		this.clearCacheGroup = this.clearCacheGroup.bind(this);
 		this.updateCacheGroup = this.updateCacheGroup.bind(this);
+		this.setGlobalInitData = this.setGlobalInitData.bind(this);
 		if (context) {
 			Object.assign(this, {
 				config: context?.config,
@@ -69,6 +70,11 @@ abstract class Core {
 			return false;
 		}
 		return true;
+	}
+
+	protected dataPrepare(data: unknown) {
+		const json = JSON.stringify(data);
+		return this.jsonParse(json);
 	}
 
 	protected jsonParse(str: string) {
@@ -282,6 +288,10 @@ abstract class Core {
 			this.clearCacheGroup(group);
 		}
 		delete this.cache[key];
+	}
+
+	public setGlobalInitData(name: string, data: TGroupsData): void {
+		this.initData[name] = data;
 	}
 
 	public setInitData(data: TGroupsData): void {

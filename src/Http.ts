@@ -99,13 +99,15 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 
 	private initCache(): void {
 		this.cacheIndex = md5(this.path + JSON.stringify(this.params.data));
+
 		if (this.params.globalName) {
 			if (this.initData[this.params.globalName]) {
-				this.setCache(this.cacheIndex, this.initData[this.params.globalName], (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
+				this.setCache(this.cacheIndex, this.dataPrepare(this.initData[this.params.globalName]), (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
 				this.params.cache = this.params.cache ?? true;
 				delete this.initData[this.params.globalName];
 			}
 		}
+		
 		if (this.params.cache) {
 			if (typeof this.params.cache === 'string') {
 				this.events.addListener('trigger-request-by-cache-' + this.params.cache, this.request);
