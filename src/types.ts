@@ -51,6 +51,13 @@ export type TConfigDataReviver = {
 	[index: string]: (value: any) => any;
 };
 
+export type FieldRevivers = Record<string, (v: any) => any>;
+
+export type ObjectReviverRule = {
+	keys: Set<string>;
+	fn: (obj: any) => any;
+};
+
 export type TConfig = {
 	host: string;
 	reviver?: (this: any, key: string, value: any) => any;

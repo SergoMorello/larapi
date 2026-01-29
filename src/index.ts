@@ -54,6 +54,7 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 		this.getUid = this.getUid.bind(this);
 		this.getUser = this.getUser.bind(this);
 		this.addListener = this.addListener.bind(this);
+		this.getConfig = this.getConfig.bind(this);
 	}
 
 	public http<DATA extends S[PATH]['?'], PATH extends keyof S = keyof S>(method: TMethod, params: TParams<PATH, DATA>) {
@@ -111,6 +112,10 @@ class API<D extends TResponseData = TResponseData, U extends TUser = TUser, S ex
 	public setCSRFToken(csrfToken: string) {
 		this.csrfToken = csrfToken;
 		this.events.emit('csrf-token-update', csrfToken);
+	}
+
+	public getConfig() {
+		return this.config;
 	}
 
 	public getToken() {

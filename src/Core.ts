@@ -8,7 +8,9 @@ import type {
 	TData,
 	TGroupsData,
 	TCoreRviverObject,
-	TRequestHeaders
+	TRequestHeaders,
+	FieldRevivers,
+	ObjectReviverRule
 } from './types';
 
 abstract class Core {
@@ -72,56 +74,74 @@ abstract class Core {
 		return true;
 	}
 
-	protected dataPrepare(data: unknown) {
+	private compileRevivers() {
+		const fieldRevivers: FieldRevivers = {};
+		const objectRevivers: ObjectReviverRule[] = [];
+
+		const replace = this.config.dataReviver;
+		if (!replace) return { fieldRevivers, objectRevivers };
+
+		for (const [key, fn] of Object.entries(replace)) {
+			if (typeof fn !== 'function') continue;
+
+			if (key.includes('&')) {
+				objectRevivers.push({
+					keys: new Set(key.split('&')),
+					fn
+				});
+			} else {
+				fieldRevivers[key] = fn;
+			}
+		}
+
+		return { fieldRevivers, objectRevivers };
+	}
+
+	public dataPrepare(data: unknown) {
 		const json = JSON.stringify(data);
 		return this.jsonParse(json);
 	}
 
-	protected jsonParse(str: string) {
+	public jsonParse(str: string) {
+		// 1. стандартный reviver — сразу выходим
 		if (typeof this.config.reviver === 'function') {
 			return JSON.parse(str, this.config.reviver);
 		}
 
-		if (this.config.dataReviver) {
-			const replace = this.config.dataReviver;
-			const dataKeys = Object.keys(replace);
-			const ifKeys: TCoreRviverObject = {};
+		const { fieldRevivers, objectRevivers } = this.compileRevivers();
 
-			dataKeys.forEach((key) => {
-				const and = key.split('&');
-				if (and.length > 1) {
-					ifKeys.and = ifKeys.and ?? {};
-					if (key in ifKeys.and) {
-						ifKeys.and[key].push(...and);
-					}else{
-						ifKeys.and[key] = and;
+		// 2. парсим ОДИН раз
+		const data = JSON.parse(str, (key, value) => {
+			const reviver = fieldRevivers[key];
+			return reviver ? reviver(value) : value;
+		});
+
+		// 3. объектные правила
+		if (
+			data &&
+			typeof data === 'object' &&
+			!Array.isArray(data)
+		) {
+			const keys = Object.keys(data);
+
+			for (const rule of objectRevivers) {
+				if (rule.keys.size > keys.length) continue;
+
+				let match = true;
+				for (const k of rule.keys) {
+					if (!(k in data)) {
+						match = false;
+						break;
 					}
 				}
-			});
 
-			const data = JSON.parse(str, (key, value) => {
-				if ((key in replace && typeof replace[key] === 'function')) {
-					return replace[key](value);
-				}
-				return value;
-			});
-			
-			if (ifKeys.and && data) {
-				const dataKeys = Object.keys(data);
-
-				if (ifKeys.and) {
-					for (const [key, keys] of Object.entries(ifKeys.and)) {
-						if (keys.length === dataKeys.length && keys.every((key) => dataKeys.includes(key))) {
-							return replace[key](data);
-						}
-					}
+				if (match) {
+					return rule.fn(data);
 				}
 			}
-
-			return data;
 		}
-		
-		return JSON.parse(str);
+
+		return data;
 	}
 
 	public setHost(host: string): void {
