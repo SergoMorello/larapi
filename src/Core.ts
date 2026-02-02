@@ -97,52 +97,71 @@ abstract class Core {
 		return { fieldRevivers, objectRevivers };
 	}
 
+	private applyObjectRevivers(
+		value: unknown,
+		objectRevivers: ObjectReviverRule[]
+	): unknown {
+		if (!value || typeof value !== 'object') {
+			return value;
+		}
+
+		if (Array.isArray(value)) {
+			for (let i = 0; i < value.length; i++) {
+				value[i] = this.applyObjectRevivers(value[i], objectRevivers);
+			}
+			return value;
+		}
+
+		const obj = value as Record<string, any>;
+		const keys = Object.keys(obj);
+
+		// 1. сначала проверяем замену
+		for (const rule of objectRevivers) {
+			if (rule.keys.size > keys.length) continue;
+
+			let match = true;
+			for (const k of rule.keys) {
+				if (!(k in obj)) {
+					match = false;
+					break;
+				}
+			}
+
+			if (match) {
+				// возвращаем результат и НЕ обходим его дальше
+				return rule.fn(obj);
+			}
+		}
+
+		// 2. если не заменили — идём вглубь
+		for (const k of keys) {
+			obj[k] = this.applyObjectRevivers(obj[k], objectRevivers);
+		}
+
+		return obj;
+	}
+
+
 	public dataPrepare(data: unknown) {
 		const json = JSON.stringify(data);
 		return this.jsonParse(json);
 	}
 
 	public jsonParse(str: string) {
-		// 1. стандартный reviver — сразу выходим
 		if (typeof this.config.reviver === 'function') {
 			return JSON.parse(str, this.config.reviver);
 		}
 
 		const { fieldRevivers, objectRevivers } = this.compileRevivers();
 
-		// 2. парсим ОДИН раз
 		const data = JSON.parse(str, (key, value) => {
 			const reviver = fieldRevivers[key];
 			return reviver ? reviver(value) : value;
 		});
 
-		// 3. объектные правила
-		if (
-			data &&
-			typeof data === 'object' &&
-			!Array.isArray(data)
-		) {
-			const keys = Object.keys(data);
-
-			for (const rule of objectRevivers) {
-				if (rule.keys.size > keys.length) continue;
-
-				let match = true;
-				for (const k of rule.keys) {
-					if (!(k in data)) {
-						match = false;
-						break;
-					}
-				}
-
-				if (match) {
-					return rule.fn(data);
-				}
-			}
-		}
-
-		return data;
+		return this.applyObjectRevivers(data, objectRevivers);
 	}
+
 
 	public setHost(host: string): void {
 		this.config.host = host;

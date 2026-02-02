@@ -73,6 +73,17 @@ test('reviver data', async () => {
 		id: 1,
 		route: '/images/test.png'
 	} as any);
+
+	api.setGlobalInitData('reviver-test3', [
+		{
+			id: 2,
+			route: '/images/test2.png'
+		},
+		{
+			id: 3,
+			route: '/images/test3.png'
+		}
+	] as any);
 	
 	const data1 = await api.get({
 		path: '/todos/1',
@@ -102,4 +113,19 @@ test('reviver data', async () => {
 	}).promise
 
 	expect(data2?.revived).toBe(true);
+
+	const data3 = await api.get({
+		path: '/todos',
+		cache: true,
+		globalName: 'reviver-test3',
+		success: (data) => {
+			console.log(data)
+		},
+		fail: (error) => {
+			console.log(error)
+		}
+	}).promise
+
+	expect(data3.at(0)?.revived).toBe(true);
+	expect(data3.at(1)?.revived).toBe(true);
 });
