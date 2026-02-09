@@ -50,7 +50,7 @@ test('reviver data', async () => {
 		host: 'https://jsonplaceholder.typicode.com',
 		dataReviver: {
 			image: toImage,
-			'id&route': toImage
+			'id&route&ext': toImage
 		}
 	});
 
@@ -64,6 +64,7 @@ test('reviver data', async () => {
 				image: {
 					id: 1,
 					route: '/images/test.png',
+					ext: 'png'
 				}
 			}
 		]
@@ -71,17 +72,24 @@ test('reviver data', async () => {
 
 	api.setGlobalInitData('reviver-test2', {
 		id: 1,
-		route: '/images/test.png'
+		route: '/images/test.png',
+		ext: 'png'
 	} as any);
 
 	api.setGlobalInitData('reviver-test3', [
 		{
 			id: 2,
-			route: '/images/test2.png'
+			route: '/images/test2.png',
+			ext: 'png'
 		},
 		{
 			id: 3,
-			route: '/images/test3.png'
+			route: '/images/test3.jpg',
+			ext: 'jpg'
+		},
+		{
+			id: 4,
+			title: 'test'
 		}
 	] as any);
 	
@@ -125,7 +133,7 @@ test('reviver data', async () => {
 			console.log(error)
 		}
 	}).promise
-
+	console.log(data3)
 	expect(data3.at(0)?.revived).toBe(true);
 	expect(data3.at(1)?.revived).toBe(true);
 });
