@@ -132,6 +132,10 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 		return this._promise;
 	}
 
+	public get url() {
+		return this.params.host + this.path;
+	}
+
 	private initQueue(): void {
 		this.queueName = this.params.queueThrottling ? md5(this.path) : this.cacheIndex;
 	}
@@ -213,16 +217,32 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 		this.setEmit('api-request-progress', progress);
 	}
 
-	private encodeUrlParams(data: TData) {
-		return Object.entries(data).map(([key, value]) => {
-			if (Array.isArray(value)) {
-				return value.map((val) => encodeURIComponent(key) + "[]=" + encodeURIComponent(val)).join('&');
-			}
-			if (typeof value === 'object') {
-				value = JSON.stringify(value);
-			}
-			return encodeURIComponent(key) + "=" + encodeURIComponent(value);
-		}).join('&');
+	private encodeUrlParams(data: TData, prefix = ''): string {
+		return Object.entries(data)
+			.filter(([_, value]) => value !== undefined && value !== null)
+			.map(([key, value]) => {
+				// Если есть префикс (мы внутри объекта), формируем ключ как key[subKey]
+				const encodedKey = prefix ? `${prefix}[${encodeURIComponent(key)}]` : encodeURIComponent(key);
+
+				// 1. Обработка массивов (как у тебя)
+				if (Array.isArray(value)) {
+					if (value.length === 0) return `${encodedKey}[]=`;
+					return value
+						.map((val) => `${encodedKey}[]=${encodeURIComponent(String(val))}`)
+						.join('&');
+				}
+
+				// 2. Обработка объектов (вместо JSON.stringify делаем рекурсию)
+				// Важно: проверяем на null, т.к. typeof null === 'object'
+				if (typeof value === 'object' && value !== null) {
+					return this.encodeUrlParams(value, encodedKey);
+				}
+
+				// 3. Обычные значения
+				return `${encodedKey}=${encodeURIComponent(String(value))}`;
+			})
+			.filter(str => str !== "")
+			.join('&');
 	}
 
 	private cuteUndifinedParams<T extends TData>(data: T): T {
@@ -355,7 +375,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 		return new Promise((resolve, reject) => {
 			if (typeof this.xhr === 'undefined') return;
 			try {
-				this.xhr.open(this.method, this.params.host + this.path, this.params.requestAsync ?? true);
+				this.xhr.open(this.method, this.url, this.params.requestAsync ?? true);
 				
 				if (this.params.timeout) {
 					this.xhr.timeout = this.params.timeout;
@@ -435,7 +455,7 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 	
 	private streamRequest() {
 		return new Promise((resolve, reject) => {
-			fetch(this.params.host + this.path, {
+			fetch(this.url, {
 				method: this.method,
 				headers: this.headers,
 				body: this.requestParams.body,
