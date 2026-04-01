@@ -33,7 +33,7 @@ test('reviver function', async () => {
 			console.log(error)
 		}
 	}).promise
-	
+	console.log(data)
 	expect(Array.isArray(data?.items)).toBe(true);
 	expect(data?.items[0].completed).toBe(true);
 	expect(data?.items[1].title).toBe('Revived Title');
@@ -46,10 +46,16 @@ test('reviver data', async () => {
 				revived: true
 			};
 	}
+	const toImages = (obj: any) => {
+		if (Array.isArray(obj)) {
+			return obj.map((o) => toImage(o))
+		}
+	}
 	const api = new API({
 		host: 'https://jsonplaceholder.typicode.com',
 		dataReviver: {
 			image: toImage,
+			images: toImages,
 			'id&route&ext': toImage
 		}
 	});
@@ -61,6 +67,18 @@ test('reviver data', async () => {
 				id: 2,
 				title: 'Test2',
 				completed: true,
+				images: [
+					{
+						id: 1,
+						route: '/images/test.png',
+						ext: 'png'
+					},
+					{
+						id: 2,
+						route: '/images/test.png',
+						ext: 'png'
+					}
+				],
 				image: {
 					id: 1,
 					route: '/images/test.png',

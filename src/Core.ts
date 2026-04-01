@@ -99,43 +99,49 @@ abstract class Core {
 
 	private applyObjectRevivers(
 		value: unknown,
-		objectRevivers: ObjectReviverRule[]
+		objectRevivers: ObjectReviverRule[],
+		depth = 0,
+		isArrayItem = false
 	): unknown {
 		if (!value || typeof value !== 'object') {
 			return value;
 		}
 
+		// 👇 массив
 		if (Array.isArray(value)) {
 			for (let i = 0; i < value.length; i++) {
-				value[i] = this.applyObjectRevivers(value[i], objectRevivers);
+				value[i] = this.applyObjectRevivers(value[i], objectRevivers, depth + 1, true);
 			}
 			return value;
 		}
 
-		const obj = value as Record<string, any>;
-		const keys = Object.keys(obj);
+		let obj = value as Record<string, any>;
 
-		// 1. сначала проверяем замену
-		for (const rule of objectRevivers) {
-			if (rule.keys.size > keys.length) continue;
+		const shouldApply = depth === 0 || isArrayItem;
 
-			let match = true;
-			for (const k of rule.keys) {
-				if (!(k in obj)) {
-					match = false;
-					break;
+		if (shouldApply) {
+			for (const rule of objectRevivers) {
+				const keys = Object.keys(obj);
+
+				if (rule.keys.size > keys.length) continue;
+
+				let match = true;
+				for (const k of rule.keys) {
+					if (!(k in obj)) {
+						match = false;
+						break;
+					}
 				}
-			}
 
-			if (match) {
-				// возвращаем результат и НЕ обходим его дальше
-				return rule.fn(obj);
+				if (match) {
+					obj = rule.fn(obj);
+				}
 			}
 		}
 
-		// 2. если не заменили — идём вглубь
-		for (const k of keys) {
-			obj[k] = this.applyObjectRevivers(obj[k], objectRevivers);
+		// 👇 дальше всегда идём вглубь как "не массивный элемент"
+		for (const k of Object.keys(obj)) {
+			obj[k] = this.applyObjectRevivers(obj[k], objectRevivers, depth + 1, false);
 		}
 
 		return obj;
