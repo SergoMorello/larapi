@@ -99,8 +99,7 @@ abstract class Core {
 
 	private applyObjectRevivers(
 		value: unknown,
-		objectRevivers: ObjectReviverRule[],
-		depth = 0
+		objectRevivers: ObjectReviverRule[]
 	): unknown {
 		if (!value || typeof value !== 'object') {
 			return value;
@@ -108,35 +107,35 @@ abstract class Core {
 
 		if (Array.isArray(value)) {
 			for (let i = 0; i < value.length; i++) {
-				value[i] = this.applyObjectRevivers(value[i], objectRevivers, depth + 1);
+				value[i] = this.applyObjectRevivers(value[i], objectRevivers);
 			}
 			return value;
 		}
 
-		let obj = value as Record<string, any>;
+		const obj = value as Record<string, any>;
+		const keys = Object.keys(obj);
 
-		if (depth === 0) {
-			for (const rule of objectRevivers) {
-				const keys = Object.keys(obj);
+		// 1. сначала проверяем замену
+		for (const rule of objectRevivers) {
+			if (rule.keys.size > keys.length) continue;
 
-				if (rule.keys.size > keys.length) continue;
-
-				let match = true;
-				for (const k of rule.keys) {
-					if (!(k in obj)) {
-						match = false;
-						break;
-					}
+			let match = true;
+			for (const k of rule.keys) {
+				if (!(k in obj)) {
+					match = false;
+					break;
 				}
+			}
 
-				if (match) {
-					obj = rule.fn(obj);
-				}
+			if (match) {
+				// возвращаем результат и НЕ обходим его дальше
+				return rule.fn(obj);
 			}
 		}
 
-		for (const k of Object.keys(obj)) {
-			obj[k] = this.applyObjectRevivers(obj[k], objectRevivers, depth + 1);
+		// 2. если не заменили — идём вглубь
+		for (const k of keys) {
+			obj[k] = this.applyObjectRevivers(obj[k], objectRevivers);
 		}
 
 		return obj;
