@@ -414,16 +414,18 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 					.catch(reject);
 				};
 				
-				this.xhr.onerror = async () => {
+				this.xhr.onerror = async (event) => {
 					await this.tryHttpRequest()
 						.then(resolve)
 						.catch(reject);
 					reject({
 						type: 'error',
-						message: 'request error'
+						message: 'request error',
+						event
 					});
 					this.handleError({
-						message: 'request error'
+						message: 'request error',
+						event
 					});
 				};
 				
