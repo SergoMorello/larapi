@@ -102,7 +102,8 @@ class Http<D extends TResponseData = TResponseData, PATH = any, DATA = any> exte
 
 		if (this.params.globalName) {
 			if (this.initData[this.params.globalName]) {
-				this.setCache(this.cacheIndex, this.dataPrepare(this.initData[this.params.globalName]), (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
+				const data = this.config.globalDataWithoutDataPrepare ? this.initData[this.params.globalName] : this.dataPrepare(this.initData[this.params.globalName]);
+				this.setCache(this.cacheIndex, data, (typeof this.params.cache === 'boolean' ? undefined : this.params.cache));
 				this.params.cache = this.params.cache ?? true;
 				delete this.initData[this.params.globalName];
 			}

@@ -67,6 +67,7 @@ export type TConfig = {
 	headers?: TRequestHeaders;
 	clearUndifinedData?: boolean;
 	timeout?: number;
+	globalDataWithoutDataPrepare?: boolean;
 };
 
 export type TResponseData = {
