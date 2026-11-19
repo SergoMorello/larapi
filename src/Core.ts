@@ -10,8 +10,12 @@ import type {
 	TCoreRviverObject,
 	TRequestHeaders,
 	FieldRevivers,
-	ObjectReviverRule
+	ObjectReviverRule,
+	ReviverObject,
+	ObjectCondition
 } from './types';
+
+const MAX_REVIVER_DEPTH = 100;
 
 abstract class Core {
 	private cache: TCache;
@@ -74,19 +78,125 @@ abstract class Core {
 		return true;
 	}
 
+	
+
+	private hasOwn(value: object, key: string): boolean {
+		return Object.prototype.hasOwnProperty.call(value, key);
+	}
+	private isPlainObject(value: unknown): value is ReviverObject {
+		if (value === null || typeof value !== 'object') {
+			return false;
+		}
+
+		const prototype = Object.getPrototypeOf(value);
+
+		return prototype === Object.prototype || prototype === null;
+	};
+
+	private parseConditionValue = (value: string): unknown => {
+		try {
+			return JSON.parse(value);
+		} catch {
+			return value;
+		}
+	};
+
+	private compileCondition = (expression: string): ObjectCondition => {
+		const match = expression.match(
+			/^([^\s=!<>]+)\s*(>=|<=|!=|=|>|<)\s*(.*)$/
+		);
+
+		if (!match) {
+			if (!expression || /[\s=!<>]/.test(expression)) {
+				throw new Error(
+					`Некорректное условие reviver: "${expression}"`
+				);
+			}
+
+			return value => this.hasOwn(value, expression);
+		}
+
+		const [, key, operator, rawValue] = match;
+		const expected = this.parseConditionValue(rawValue.trim());
+
+		if (operator === '=') {
+			return value =>
+				this.hasOwn(value, key) &&
+				value[key] === expected;
+		}
+
+		if (operator === '!=') {
+			return value =>
+				this.hasOwn(value, key) &&
+				value[key] !== expected;
+		}
+
+		if (typeof expected !== 'number' || !Number.isFinite(expected)) {
+			throw new Error(
+				`Для оператора "${operator}" требуется число: "${expression}"`
+			);
+		}
+
+		let compare: (actual: number) => boolean;
+
+		switch (operator) {
+			case '>':
+				compare = actual => actual > expected;
+				break;
+
+			case '>=':
+				compare = actual => actual >= expected;
+				break;
+
+			case '<':
+				compare = actual => actual < expected;
+				break;
+
+			case '<=':
+				compare = actual => actual <= expected;
+				break;
+
+			default:
+				throw new Error(`Неизвестный оператор: "${operator}"`);
+		}
+
+		return value => {
+			if (!this.hasOwn(value, key)) {
+				return false;
+			}
+
+			const actual = value[key];
+
+			return typeof actual === 'number' && compare(actual);
+		};
+	};
+
 	private compileRevivers() {
 		const fieldRevivers: FieldRevivers = {};
 		const objectRevivers: ObjectReviverRule[] = [];
 
 		const replace = this.config.dataReviver;
-		if (!replace) return { fieldRevivers, objectRevivers };
 
-		for (const [key, fn] of Object.entries(replace)) {
-			if (typeof fn !== 'function') continue;
+		if (!replace) {
+			return { fieldRevivers, objectRevivers };
+		}
 
-			if (key.includes('&')) {
+		for (const [rawKey, fn] of Object.entries(replace)) {
+			if (typeof fn !== 'function') {
+				continue;
+			}
+
+			const key = rawKey.trim();
+
+			if (!key) {
+				throw new Error('Ключ reviver не может быть пустым');
+			}
+
+			if (/[&=!<>]/.test(key)) {
 				objectRevivers.push({
-					keys: new Set(key.split('&')),
+					conditions: key.split('&').map(part =>
+						this.compileCondition(part.trim())
+					),
 					fn
 				});
 			} else {
@@ -101,50 +211,110 @@ abstract class Core {
 		value: unknown,
 		objectRevivers: ObjectReviverRule[],
 		depth = 0,
-		isArrayItem = false
+		isArrayItem = false,
+		visited = new WeakMap<object, unknown>()
 	): unknown {
-		if (!value || typeof value !== 'object') {
+		if (
+			objectRevivers.length === 0 ||
+			value === null ||
+			typeof value !== 'object'
+		) {
 			return value;
 		}
 
-		// 👇 массив
-		if (Array.isArray(value)) {
-			for (let i = 0; i < value.length; i++) {
-				value[i] = this.applyObjectRevivers(value[i], objectRevivers, depth + 1, true);
-			}
+		if (visited.has(value)) {
+			return visited.get(value);
+		}
+
+		const isArray = Array.isArray(value);
+
+		// Экземпляры классов, включая MobX stores, не обходим.
+		if (!isArray && !this.isPlainObject(value)) {
 			return value;
 		}
 
-		let obj = value as Record<string, any>;
+		if (depth > MAX_REVIVER_DEPTH) {
+			throw new Error(
+				`Max reviver depth exceeded: ${MAX_REVIVER_DEPTH}`
+			);
+		}
 
-		const shouldApply = depth === 0 || isArrayItem;
+		let result: unknown = value;
 
-		if (shouldApply) {
+		if (!isArray && (depth === 0 || isArrayItem)) {
 			for (const rule of objectRevivers) {
-				const keys = Object.keys(obj);
-
-				if (rule.keys.size > keys.length) continue;
-
 				let match = true;
-				for (const k of rule.keys) {
-					if (!(k in obj)) {
+
+				for (const condition of rule.conditions) {
+					if (!condition(result as ReviverObject)) {
 						match = false;
 						break;
 					}
 				}
 
-				if (match) {
-					obj = rule.fn(obj);
+				if (!match) {
+					continue;
+				}
+
+				result = rule.fn(result as ReviverObject);
+
+				// Следующие правила применимы только к обычному объекту.
+				if (!this.isPlainObject(result)) {
+					break;
 				}
 			}
 		}
 
-		// 👇 дальше всегда идём вглубь как "не массивный элемент"
-		for (const k of Object.keys(obj)) {
-			obj[k] = this.applyObjectRevivers(obj[k], objectRevivers, depth + 1, false);
+		// Если обработчик вернул уже посещённый объект,
+		// используем сохранённый результат его преобразования.
+		if (
+			result !== value &&
+			result !== null &&
+			typeof result === 'object' &&
+			visited.has(result)
+		) {
+			const cached = visited.get(result);
+
+			visited.set(value, cached);
+
+			return cached;
 		}
 
-		return obj;
+		// Сохраняем результат до обхода вложенных значений,
+		// чтобы разорвать циклические ссылки.
+		visited.set(value, result);
+
+		if (result === null || typeof result !== 'object') {
+			return result;
+		}
+
+		if (result !== value) {
+			visited.set(result, result);
+		}
+
+		if (Array.isArray(result)) {
+			for (let i = 0; i < result.length; i++) {
+				result[i] = this.applyObjectRevivers(
+					result[i],
+					objectRevivers,
+					depth + 1,
+					true,
+					visited
+				);
+			}
+		} else if (this.isPlainObject(result)) {
+			for (const key of Object.keys(result)) {
+				result[key] = this.applyObjectRevivers(
+					result[key],
+					objectRevivers,
+					depth + 1,
+					false,
+					visited
+				);
+			}
+		}
+
+		return result;
 	}
 
 

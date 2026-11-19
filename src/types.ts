@@ -53,10 +53,18 @@ export type TConfigDataReviver = {
 
 export type FieldRevivers = Record<string, (v: any) => any>;
 
+export type ReviverObject = Record<string, any>;
+
+export type ObjectReviverFn = (value: ReviverObject) => unknown;
+
+export type ObjectCondition = (value: ReviverObject) => boolean;
+
 export type ObjectReviverRule = {
-	keys: Set<string>;
-	fn: (obj: any) => any;
+	conditions: ObjectCondition[];
+	fn: ObjectReviverFn;
 };
+
+
 
 export type TConfig = {
 	host: string;
