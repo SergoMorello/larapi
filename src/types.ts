@@ -69,6 +69,7 @@ export type ObjectReviverRule = {
 export type TConfig = {
 	host: string;
 	reviver?: (this: any, key: string, value: any) => any;
+	reviverDepth?: boolean;
 	tryRequest?: number;
 	tryRequestDelay?: number;
 	dataReviver?: TConfigDataReviver;

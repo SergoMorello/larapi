@@ -210,111 +210,92 @@ abstract class Core {
 	private applyObjectRevivers(
 		value: unknown,
 		objectRevivers: ObjectReviverRule[],
-		depth = 0,
-		isArrayItem = false,
-		visited = new WeakMap<object, unknown>()
+		shallow = false
 	): unknown {
-		if (
-			objectRevivers.length === 0 ||
-			value === null ||
-			typeof value !== 'object'
-		) {
+		if (objectRevivers.length === 0) {
 			return value;
 		}
 
-		if (visited.has(value)) {
-			return visited.get(value);
-		}
+		const visited = new WeakMap<object, unknown>();
+		let depthWarningShown = false;
 
-		const isArray = Array.isArray(value);
+		const visit = (current: unknown, depth: number): unknown => {
+			if (current === null || typeof current !== 'object') {
+				return current;
+			}
 
-		// Экземпляры классов, включая MobX stores, не обходим.
-		if (!isArray && !this.isPlainObject(value)) {
-			return value;
-		}
+			if (visited.has(current)) {
+				return visited.get(current);
+			}
 
-		if (depth > MAX_REVIVER_DEPTH) {
-			throw new Error(
-				`Max reviver depth exceeded: ${MAX_REVIVER_DEPTH}`
-			);
-		}
+			const isArray = Array.isArray(current);
 
-		let result: unknown = value;
+			if (!isArray && !this.isPlainObject(current)) {
+				return current;
+			}
 
-		if (!isArray && (depth === 0 || isArrayItem)) {
+			if (depth > MAX_REVIVER_DEPTH) {
+				if (!depthWarningShown) {
+					depthWarningShown = true;
+
+					console.warn(
+						`[dataReviver] max depth exceeded: ` +
+						`${MAX_REVIVER_DEPTH}. Deeper values are ` +
+						`returned without processing.`
+					);
+				}
+
+				return current;
+			}
+
+			visited.set(current, current);
+
+			if (isArray) {
+				// В поверхностном режиме обходим только корневой массив.
+				if (!shallow || depth === 0) {
+					for (let i = 0; i < current.length; i++) {
+						current[i] = visit(current[i], depth + 1);
+					}
+				}
+
+				return current;
+			}
+
+			const object = current as ReviverObject;
+
+			if (!shallow) {
+				for (const key of Object.keys(object)) {
+					object[key] = visit(object[key], depth + 1);
+				}
+			}
+
+			let result: unknown = object;
+
 			for (const rule of objectRevivers) {
+				if (!this.isPlainObject(result)) {
+					break;
+				}
+
 				let match = true;
 
 				for (const condition of rule.conditions) {
-					if (!condition(result as ReviverObject)) {
+					if (!condition(result)) {
 						match = false;
 						break;
 					}
 				}
 
-				if (!match) {
-					continue;
-				}
-
-				result = rule.fn(result as ReviverObject);
-
-				// Следующие правила применимы только к обычному объекту.
-				if (!this.isPlainObject(result)) {
-					break;
+				if (match) {
+					result = rule.fn(result);
 				}
 			}
-		}
 
-		// Если обработчик вернул уже посещённый объект,
-		// используем сохранённый результат его преобразования.
-		if (
-			result !== value &&
-			result !== null &&
-			typeof result === 'object' &&
-			visited.has(result)
-		) {
-			const cached = visited.get(result);
+			visited.set(current, result);
 
-			visited.set(value, cached);
-
-			return cached;
-		}
-
-		// Сохраняем результат до обхода вложенных значений,
-		// чтобы разорвать циклические ссылки.
-		visited.set(value, result);
-
-		if (result === null || typeof result !== 'object') {
 			return result;
-		}
+		};
 
-		if (result !== value) {
-			visited.set(result, result);
-		}
-
-		if (Array.isArray(result)) {
-			for (let i = 0; i < result.length; i++) {
-				result[i] = this.applyObjectRevivers(
-					result[i],
-					objectRevivers,
-					depth + 1,
-					true,
-					visited
-				);
-			}
-		} else if (this.isPlainObject(result)) {
-			for (const key of Object.keys(result)) {
-				result[key] = this.applyObjectRevivers(
-					result[key],
-					objectRevivers,
-					depth + 1,
-					false,
-					visited
-				);
-			}
-		}
-
-		return result;
+		return visit(value, 0);
 	}
 
 
@@ -335,7 +316,7 @@ abstract class Core {
 			return reviver ? reviver(value) : value;
 		});
 
-		return this.applyObjectRevivers(data, objectRevivers);
+		return this.applyObjectRevivers(data, objectRevivers, !this.config.reviverDepth);
 	}
 
 
